@@ -1,0 +1,14 @@
+﻿# yaml-language-server: $schema=https://json.schemastore.org/clang-format.json
+---
+Language: Cpp
+BasedOnStyle: Google
+AllowShortBlocksOnASingleLine: false
+ColumnLimit: 100
+DerivePointerAlignment: false
+IndentWidth: 4
+TabWidth: 4
+PointerAlignment: Left
+SpaceBeforeParens: ControlStatements
+InsertBraces: true
+AlignAfterOpenBracket: BlockIndent
+AlignConsecutiveMacros: AcrossEmptyLines
