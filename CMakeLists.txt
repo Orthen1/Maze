@@ -9,7 +9,9 @@ include_directories(header src)
 find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
-set(SOURCE_FILES src/main.cpp src/glad.c src/stb_image.cpp)
+set(SOURCE_FILES src/main.cpp src/glad.c src/stb_image.cpp
+        src/Shader.cpp
+        header/Shader.h)
 
 add_executable(Maze ${SOURCE_FILES})
 
