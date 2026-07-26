@@ -11,7 +11,9 @@ find_package(OpenGL REQUIRED)
 
 set(SOURCE_FILES src/main.cpp src/glad.c src/stb_image.cpp
         src/Shader.cpp
-        header/Shader.h)
+        header/Shader.h
+        src/Camera.cpp
+        header/Camera.h)
 
 add_executable(Maze ${SOURCE_FILES})
 

@@ -8,6 +8,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "Shader.h"
 #include "stb_image.h"
@@ -44,11 +45,39 @@ int main() {
         0.5f, -0.5f, 0.0f,  0.0f, 1.0f,
         -0.5f,  0.5f, 0.0f, 1.0f, 0.0f,
         0.5f,  0.5f, 0.0f,  0.0f, 0.0f,
+
+        0.5f,  -0.5f, 0.5f, 1.0f, 0.0f,
+        -0.5f,  -0.5f,0.5f, 0.0f, 0.0f,
+        0.5f,  0.5f, 0.5f,  0.0f, 0.0f,
+        0.5f,  0.5f, 0.0f,  1.0f, 0.0f,
+        -0.5f,  0.5f,0.5f, 0.0f, 1.0f,
+        0.5f,  0.5f, 0.5f,  0.0f, 1.0f,
     };
 
     int indeces[] = {
-        0,1,2,
-        1,2,3,
+        //BACK
+        //0,1,2,
+        //1,2,3,
+
+        //DOWN
+        0,1,4,
+        0,4,5,
+
+        //RIGHT
+        6,1,7,
+        6,4,1,
+
+        //LEFT
+        0,2,5,
+        2,5,8,
+
+        //UP
+        2,3,9,
+        2,6,8,
+
+
+
+
     };
 
     if (initOpenGL() != SUCCESS ) {
@@ -117,6 +146,12 @@ int main() {
  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 #endif
 
+
+
+
+
+
+
     //** TEXTURE DEFINITION **//
 
     unsigned int texture;
@@ -126,6 +161,7 @@ int main() {
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+
 
     int width, height,nrChannels;
 
@@ -143,7 +179,7 @@ int main() {
     shader.use();
     shader.setInt("texture", 0);
 
-
+    glEnable(GL_DEPTH_TEST);
     //**RENDER LOOP **//
 
     while (!glfwWindowShouldClose(window)) {
@@ -154,17 +190,37 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-
+        // Rendering Process //
         shader.use();
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
+
+        //** MATRIX SPACE **//
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate(model, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+        glm::mat4 view = glm::mat4(1.0f);
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+        glm::mat4 projection = glm::mat4(1.0f);
+        projection = glm::perspective(glm::radians(45.0f),float(SCR_WIDTH)/float(SCR_HEIGHT),0.1f,100.0f);
+
+
+        shader.setMat4("model",model);
+        shader.setMat4("view",view);
+        shader.setMat4("projection",projection);
+
+        //render container
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1,&EBO);
     glfwDestroyWindow(window);
     glfwTerminate();
 
