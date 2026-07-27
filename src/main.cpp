@@ -10,6 +10,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "Camera.h"
 #include "Shader.h"
 #include "stb_image.h"
 
@@ -25,6 +26,7 @@
 int initOpenGL();
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void ProcessInput(GLFWwindow* window);
+void mouseCallback(GLFWwindow* window, double xposIn, double yposIn);
 
 /**ERROR CODE**/
  enum ERR_CODE {
@@ -32,6 +34,13 @@ void ProcessInput(GLFWwindow* window);
     SUCCESS = 0,
 };
 
+Camera camera(glm::vec3(0.0f, 0.0f, 0.0f));
+float lastX = SCR_WIDTH/2.0f;
+float lastY = SCR_HEIGHT / 2.0;
+bool firstMouse = true;
+
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
 
 
 int main() {
@@ -50,14 +59,20 @@ int main() {
         -0.5f,  -0.5f,0.5f, 0.0f, 0.0f,
         0.5f,  0.5f, 0.5f,  0.0f, 0.0f,
         0.5f,  0.5f, 0.0f,  1.0f, 0.0f,
+
         -0.5f,  0.5f,0.5f, 0.0f, 1.0f,
         0.5f,  0.5f, 0.5f,  0.0f, 1.0f,
+
+        -0.5f, -0.5f, 0.5f, 1.0f, 1.0f,
+        0.5f, -0.5f, 0.5f,  0.0f, 1.0f,
+        -0.5f,  0.5f, 0.5f, 1.0f, 0.0f,
+        0.5f,  0.5f, 0.5f,  0.0f, 0.0f,
     };
 
     int indeces[] = {
-        //BACK
-        //0,1,2,
-        //1,2,3,
+        //BACk
+        0,1,2,
+        1,2,3,
 
         //DOWN
         0,1,4,
@@ -75,6 +90,9 @@ int main() {
         2,3,9,
         2,6,8,
 
+        //FRONT
+        10,11,12,
+        11,12,13,
 
 
 
@@ -107,7 +125,7 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // GLFW set Functions //
-
+    glfwSetCursorPosCallback(window, mouseCallback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glViewport(0, 0, 640, 480);
     Shader shader = Shader(vertes.c_str(), fragment.c_str());
@@ -180,9 +198,14 @@ int main() {
     shader.setInt("texture", 0);
 
     glEnable(GL_DEPTH_TEST);
-    //**RENDER LOOP **//
 
+    camera.Position = glm::vec3(0.0f,0.0f,3.0f);
+
+    //**RENDER LOOP **//
     while (!glfwWindowShouldClose(window)) {
+        float currentFrame = static_cast<float>(glfwGetTime());
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
         //Input Process //
         ProcessInput(window);
 
@@ -190,29 +213,34 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-        // Rendering Process //
-        shader.use();
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
+        // Rendering Process //
+        shader.use();
 
-        //** MATRIX SPACE **//
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
-        glm::mat4 view = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
         glm::mat4 projection = glm::mat4(1.0f);
         projection = glm::perspective(glm::radians(45.0f),float(SCR_WIDTH)/float(SCR_HEIGHT),0.1f,100.0f);
-
-
-        shader.setMat4("model",model);
-        shader.setMat4("view",view);
         shader.setMat4("projection",projection);
+
+        glm::mat4 view = camera.getViewMatrix();
+        shader.setMat4("view",view);
+
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate(model, glm::radians(float(glfwGetTime())*45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        shader.setMat4("model",model);
+
+        //** MATRIX SPACE **//
+
+
+
+
+
+
 
         //render container
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -256,9 +284,42 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 }
 
 void ProcessInput(GLFWwindow* window) {
-
     if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ESCAPE)) {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
 
+    if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_W)) {
+        camera.processKeyboard(FORWARD, deltaTime);
+    }
+    if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_S)) {
+        camera.processKeyboard(BACKWARD, deltaTime);
+    }
+    if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_A)) {
+        camera.processKeyboard(LEFT, deltaTime);
+    }
+    if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_D)) {
+        camera.processKeyboard(RIGHT, deltaTime);
+    }
+
+}
+
+
+void mouseCallback(GLFWwindow* window, double xposIn, double yposIn) {
+
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos;
+
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.processMouse(xoffset, yoffset);
 }
