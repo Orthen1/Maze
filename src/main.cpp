@@ -27,12 +27,15 @@ int initOpenGL();
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void ProcessInput(GLFWwindow* window);
 void mouseCallback(GLFWwindow* window, double xposIn, double yposIn);
-
+void loadLayout(std::string fileName, std::vector<glm::vec3>& position );
 /**ERROR CODE**/
  enum ERR_CODE {
+    FILE_ERR =-2,
     GLFW_FAIL =  -1,
     SUCCESS = 0,
 };
+
+/** GLOBAL VARIABLES **/
 
 Camera camera(glm::vec3(0.0f, 0.0f, 0.0f));
 float lastX = SCR_WIDTH/2.0f;
@@ -55,18 +58,18 @@ int main() {
         -0.5f,  0.5f, 0.0f, 1.0f, 0.0f,
         0.5f,  0.5f, 0.0f,  0.0f, 0.0f,
 
-        0.5f,  -0.5f, 0.5f, 1.0f, 0.0f,
-        -0.5f,  -0.5f,0.5f, 0.0f, 0.0f,
-        0.5f,  0.5f, 0.5f,  0.0f, 0.0f,
+        0.5f,  -0.5f, 1.0f, 1.0f, 0.0f,
+        -0.5f,  -0.5f,1.0f, 0.0f, 0.0f,
+        0.5f,  0.5f, 1.0f,  0.0f, 0.0f,
         0.5f,  0.5f, 0.0f,  1.0f, 0.0f,
 
-        -0.5f,  0.5f,0.5f, 0.0f, 1.0f,
-        0.5f,  0.5f, 0.5f,  0.0f, 1.0f,
+        -0.5f,  0.5f,1.0f, 0.0f, 1.0f,
+        0.5f,  0.5f, 1.0f,  0.0f, 1.0f,
 
-        -0.5f, -0.5f, 0.5f, 1.0f, 1.0f,
-        0.5f, -0.5f, 0.5f,  0.0f, 1.0f,
-        -0.5f,  0.5f, 0.5f, 1.0f, 0.0f,
-        0.5f,  0.5f, 0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, 1.0f, 1.0f, 1.0f,
+        0.5f, -0.5f, 1.0f,  0.0f, 1.0f,
+        -0.5f,  0.5f, 1.0f, 1.0f, 0.0f,
+        0.5f,  0.5f, 1.0f,  0.0f, 0.0f,
     };
 
     int indeces[] = {
@@ -97,6 +100,9 @@ int main() {
 
 
     };
+
+    std::vector<glm::vec3> wallPos;
+    loadLayout("../maze.txt", wallPos);
 
     if (initOpenGL() != SUCCESS ) {
         return -1;
@@ -199,7 +205,7 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
 
-    camera.Position = glm::vec3(0.0f,0.0f,3.0f);
+
 
     //**RENDER LOOP **//
     while (!glfwWindowShouldClose(window)) {
@@ -226,9 +232,15 @@ int main() {
         glm::mat4 view = camera.getViewMatrix();
         shader.setMat4("view",view);
 
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, glm::radians(float(glfwGetTime())*45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        shader.setMat4("model",model);
+        for (auto  pos: wallPos)
+{
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, pos);
+            shader.setMat4("model",model);
+            glBindVertexArray(VAO);
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+}
+
 
         //** MATRIX SPACE **//
 
@@ -239,8 +251,6 @@ int main() {
 
 
         //render container
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -322,4 +332,56 @@ void mouseCallback(GLFWwindow* window, double xposIn, double yposIn) {
     lastY = ypos;
 
     camera.processMouse(xoffset, yoffset);
+}
+
+
+
+void loadLayout(std::string fileName, std::vector<glm::vec3>& position ) {
+    FILE* layout;
+    char element;
+    int row = 0;
+    int column = 0;
+    int numOfWalls = 0;
+    layout = std::fopen(fileName.c_str(), "r");
+    if (layout == NULL) {
+        std::cerr << "Could not open file " << fileName << std::endl;
+        exit(FILE_ERR);
+    }
+    while (!feof(layout)) {
+        element = std::fgetc(layout);
+        if (element == '\n') {
+            row += 1;
+            column = 0;
+
+        }
+        if (element == ' ') {
+            column += 1;
+        }
+
+        if (element == '#') {
+            numOfWalls++;
+            position.push_back(glm::vec3(column,0.0f,row)) ;
+            column++;
+        }
+        if (element == 'E') {
+            column += 1;
+        }
+        if (element == 'S') {
+            camera.Position= glm::vec3(column,0.0f,row) ;
+
+            column += 1;
+        }
+
+
+
+
+
+    }
+    if (layout != NULL) {
+        if (std::fclose(layout) != 0) {
+        std::cerr<<"File Didnt close properly" << std::endl;
+        }
+    }
+
+
 }
