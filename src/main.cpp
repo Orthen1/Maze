@@ -11,6 +11,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "Camera.h"
+#include "Mesh.h"
 #include "Shader.h"
 #include "stb_image.h"
 
@@ -53,7 +54,7 @@ int main() {
     std::string fragment = "../Shaders/FragmentShader.fs";
 
 
-    float vertices[] = {
+    float cubeVertices[] = {
         -0.5f, -0.5f, 0.0f,
         0.5f, -0.5f, 0.0f,
         -0.5f,  0.5f, 0.0f,
@@ -162,21 +163,16 @@ int main() {
 
     // ** PARSING DATA TO GPU ** //
 
-    unsigned int  VAO,VBO,VBO_Tex, EBO;
+    unsigned int  VAO,VBO_Tex, EBO;
     glGenBuffers(1, &EBO);
-
     glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
     glGenBuffers(1,&VBO_Tex);
 
     glBindVertexArray(VAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    Mesh cubeMesh(cubeVertices);
 
-    glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, VBO_Tex);
     glBufferData(GL_ARRAY_BUFFER, sizeof(TexPos),TexPos,GL_STATIC_DRAW);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)(sizeof(float) * 0));
@@ -250,9 +246,9 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
+    unsigned int VBO = cubeMesh.GetVBO();
     glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1,&VBO );
+    glDeleteBuffers(1,&VBO);
     glDeleteBuffers(1,&VBO_Tex);
     glDeleteBuffers(1,&EBO);
     glfwDestroyWindow(window);

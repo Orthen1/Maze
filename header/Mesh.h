@@ -4,18 +4,23 @@
 
 #ifndef MAZE_MESH_H
 #define MAZE_MESH_H
+#pragma once
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 
 
 
 class Mesh {
 
 public:
-    Mesh(float *vertex);
+    template <size_t N>
+    Mesh(float (&vertex)[N]);
+    unsigned int GetVBO() { return VBO; };
 
 private:
     float *vertecies;
-    unsigned int VAO;
-
+    unsigned int VBO;
 
 };
 
