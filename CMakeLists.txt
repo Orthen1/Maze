@@ -14,6 +14,10 @@ set(SOURCE_FILES src/main.cpp src/glad.c src/stb_image.cpp
         header/Shader.h
         src/Camera.cpp
         header/Camera.h
+        Cube.cpp
+        Cube.h
+        src/Mesh.cpp
+        header/Mesh.h
 )
 
 add_executable(Maze ${SOURCE_FILES})
