@@ -1,7 +1,8 @@
 
 /** Includes **/
 #include <iostream>
-
+#include <random>
+#include "Grid.h"
 
 
 /**OpenGL dependecies **/
@@ -29,10 +30,11 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void ProcessInput(GLFWwindow* window);
 void mouseCallback(GLFWwindow* window, double xposIn, double yposIn);
 unsigned int loadImage(const char* filename);
-void loadLayout(std::string fileName, std::vector<glm::vec3>& position );
+bool wallCollision(std::vector<Wall> walls);
+
+
 /**ERROR CODE**/
  enum ERR_CODE {
-    FILE_ERR =-2,
     GLFW_FAIL =  -1,
     SUCCESS = 0,
 };
@@ -46,87 +48,138 @@ bool firstMouse = true;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+std::vector<Wall> wallPos;
 
 
-int main() {
 
+int main(int argc, char *args[]) {
+
+
+
+    const glm::vec4 background_color(0.0,0.0,0.0,1.0);
+    Grid grid(5,5);
+
+
+
+    //*Shader load *//
     std::string vertes = "../Shaders/VertexShader.vs";
     std::string fragment = "../Shaders/FragmentShader.fs";
 
+#if TEST
+    std::string boxVs = "../Shaders/BoundingBox.vs";
+    std::string boxFs = "../Shaders/BoundingBox.fs";
+#endif
+
+
+
 
     float cubeVertices[] = {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        -0.5f,  0.5f, 0.0f,
-        0.5f,  0.5f, 0.0f,
+        // BACK
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f, 0.0f, 1.0f,
+         0.5f,  0.5f, -0.5f, 1.0f, 1.0f,
 
-        0.5f,  -0.5f, 1.0f,
-        -0.5f,  -0.5f,1.0f,
-        0.5f,  0.5f, 1.0f,
-        0.5f,  0.5f, 0.0f,
+        // FRONT
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+         0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+        -0.5f,  0.5f, 0.5f, 0.0f, 1.0f,
+         0.5f,  0.5f, 0.5f, 1.0f, 1.0f,
 
-        -0.5f,  0.5f,1.0f,
-        0.5f,  0.5f, 1.0f,
+         // LEFT
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f, 0.0f, 1.0f,
+        -0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+        -0.5f,  0.5f, 0.5f, 1.0f, 1.0f,
 
-        -0.5f, -0.5f, 1.0f,
-        0.5f, -0.5f, 1.0f,
-        -0.5f,  0.5f, 1.0f,
-        0.5f,  0.5f, 1.0f,
+        // RIGHT
+         0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f, 1.0f, 1.0f,
+         0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+         0.5f,  0.5f, 0.5f, 0.0f, 1.0f,
+
+        // BOTTOM
+        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+         0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+
+        // TOP
+        -0.5f,  0.5f, -0.5f, 0.0f, 0.0f,
+         0.5f,  0.5f, -0.5f, 1.0f, 0.0f,
+        -0.5f,  0.5f, 0.5f, 0.0f, 1.0f,
+         0.5f,  0.5f, 0.5f, 1.0f, 1.0f
     };
 
 
-    float TexPos[] = {
-      1.0f, 1.0f,
-      0.0f, 1.0f,
-      1.0f, 0.0f,
-      0.0f, 0.0f,
 
-      1.0f, 0.0f,
-      0.0f, 0.0f,
-      0.0f, 0.0f,
-      1.0f, 0.0f,
-
-      0.0f, 1.0f,
-      0.0f, 1.0f,
-
-      1.0f, 1.0f,
-      0.0f, 1.0f,
-      1.0f, 0.0f,
-      0.0f, 0.0f,
-
-    };
 
     int indeces[] = {
-        //BACk
-        0,1,2,
-        1,2,3,
+        // BACK
+        0, 1, 2,
+        1, 3, 2,
 
-        //DOWN
-        0,1,4,
-        0,4,5,
+        // FRONT
+        4, 5, 6,
+        5, 7, 6,
 
-        //RIGHT
-        6,1,7,
-        6,4,1,
+        // LEFT
+        8, 9, 10,
+        9, 11, 10,
 
-        //LEFT
-        0,2,5,
-        2,5,8,
+        // RIGHT
+        12, 13, 14,
+        13, 15, 14,
 
-        //UP
-        2,3,9,
-        2,6,8,
+        // BOTTOM
+        16, 17, 18,
+        17, 19, 18,
 
-        //FRONT
-        10,11,12,
-        11,12,13,
+        // TOP
+        20, 21, 22,
+        21, 23, 22
+
 
 
 
     };
 
-    std::vector<glm::vec3> wallPos;
-    loadLayout("../maze.txt", wallPos);
+   // loadLayout("../maze.txt", wallPos);
+    camera.Position = grid.generateWalls(wallPos);
+#if TEST
+    grid.printMaze();
+
+    for (int y = 0; y < grid.getRows(); ++y) {
+        for (int x = 0; x < grid.getCols(); ++x) {
+
+            Tile* tile = grid.getTile(x, y);
+
+            std::cout << "(" << x << "," << y << "): ";
+
+            if (tile->direction & N)
+                std::cout << "N ";
+
+            if (tile->direction & S)
+                std::cout << "S ";
+
+            if (tile->direction & E)
+                std::cout << "E ";
+
+            if (tile->direction & W)
+                std::cout << "W ";
+
+            std::cout << '\n';
+        }
+    }
+
+
+
+#endif
+
+
+
+
+
 
     if (initOpenGL() != SUCCESS ) {
         return -1;
@@ -150,7 +203,7 @@ int main() {
         return -1;
     }
 
-    // Callback Functions for GLFW //
+    // Callback Functions fo;r GLFW //
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
@@ -161,22 +214,22 @@ int main() {
     Shader shader = Shader(vertes.c_str(), fragment.c_str());
     shader.use();
 
+#if TEST
+    Shader Bbox = Shader(boxVs.c_str(),boxFs.c_str());
+#endif
+
+
     // ** PARSING DATA TO GPU ** //
 
-    unsigned int  VAO,VBO_Tex, EBO;
+    unsigned int  VAO, EBO;
     glGenBuffers(1, &EBO);
     glGenVertexArrays(1, &VAO);
-    glGenBuffers(1,&VBO_Tex);
 
     glBindVertexArray(VAO);
 
 
-    Mesh cubeMesh(cubeVertices);
+    Mesh cubeMesh(cubeVertices,std::size(cubeVertices));
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO_Tex);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(TexPos),TexPos,GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)(sizeof(float) * 0));
-    glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indeces), indeces, GL_STATIC_DRAW);
@@ -184,6 +237,7 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glEnable(GL_PROGRAM_POINT_SIZE);
+    stbi_set_flip_vertically_on_load(true);
 
 #if  WIREFRAME
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -191,7 +245,6 @@ int main() {
 #else
  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 #endif
-
 
 
 
@@ -207,6 +260,62 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
 
+#if TEST
+// defining binding box vertex
+    std::vector<float> unitBoxVerts;
+    std::vector<uint> boxLineIndices;
+
+
+    unsigned int counter = 0;
+    for (auto wall : wallPos){
+
+        uint base = counter *8;
+
+        std::vector<float> boxVerts = wall.box.boxToVertex();
+        unitBoxVerts.insert(unitBoxVerts.end(),boxVerts.begin(),boxVerts.end());
+        boxLineIndices.insert(boxLineIndices.end(), {
+
+            base +0, base +1,
+            base +1, base +2,
+            base +2, base +3,
+            base +3, base +0,
+
+            base +4, base +5,
+            base +5, base +6,
+            base +6, base +7,
+            base +7, base +4,
+
+            base +0, base +4,
+            base +1, base +5,
+            base +2, base +6,
+            base +3, base +7,
+
+        });
+
+
+    counter++;
+    }
+
+    unsigned int VAO_Collisions, VBO_Collisions, EBO_Collisions;
+    glGenVertexArrays(1, &VAO_Collisions);
+    glBindVertexArray(VAO_Collisions);
+
+    glGenBuffers(1, &VBO_Collisions);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_Collisions);
+    glBufferData(GL_ARRAY_BUFFER, unitBoxVerts.size() * sizeof(float), unitBoxVerts.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glGenBuffers(1, &EBO_Collisions);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_Collisions);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, boxLineIndices.size() * sizeof(uint), boxLineIndices.data(), GL_STATIC_DRAW);
+
+    glBindVertexArray(0);
+    Bbox.use();
+
+#endif
+
+
 
 
     //**RENDER LOOP **//
@@ -214,10 +323,15 @@ int main() {
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+    #if TEST
+        double fps = 1/ deltaTime;
+       std::clog << "FPS:" << fps << std::endl;
+        std::cout <<"is hitting a wall:" << wallCollision(wallPos) << std::endl;
+    #endif
         //Input Process //
         ProcessInput(window);
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(background_color.x,background_color.y,background_color.z,background_color.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
@@ -234,14 +348,65 @@ int main() {
         glm::mat4 view = camera.getViewMatrix();
         shader.setMat4("view",view);
 
-        for (auto  pos: wallPos){
-
+      /*  for (auto wall: wallPos){
+            if (!wall.visible) {
+                continue;
+            }
             glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, pos);
+            model = glm::translate(model, wall.position);
+
+            if (wall.vertical == true) {
+                model = glm::scale(model,glm::vec3(wall.thickness,1.0f,1.0f));
+            }else {
+                model = glm::scale(model,glm::vec3(1.0f,1.0f,wall.thickness));
+            }
+
             shader.setMat4("model",model);
             glBindVertexArray(VAO);
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+
+
+        }*/
+
+        for (auto &tile: grid.getTiles()) {
+            if (tile->wall != nullptr) {
+                glm::mat4 model = glm::mat4(1.0f);
+                model = glm::translate(model, tile->wall->position);
+
+                if (tile->wall->vertical == true) {
+                    model = glm::scale(model,glm::vec3(tile->wall->thickness,1.0f,1.0f));
+                }else {
+                    model = glm::scale(model,glm::vec3(1.0f,1.0f,tile->wall->thickness));
+                }
+
+
+                shader.setMat4("model",model);
+                glBindVertexArray(VAO);
+                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+
+
+            }
+
         }
+
+#if TEST
+        glDisable(GL_DEPTH_TEST);
+        glLineWidth(2.0f);
+        Bbox.use();
+        Bbox.setMat4("view",view);
+        Bbox.setMat4("projection",projection);
+       for (auto wall : wallPos) {
+          glm::mat4 model = glm::mat4(1.0f);
+            Bbox.setMat4("model",model);
+            glBindVertexArray(VAO_Collisions);
+        glDrawElements(GL_LINES, boxLineIndices.size(), GL_UNSIGNED_INT, 0);
+
+        }
+        glEnable(GL_DEPTH_TEST);
+#endif
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -249,7 +414,6 @@ int main() {
     unsigned int VBO = cubeMesh.GetVBO();
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1,&VBO);
-    glDeleteBuffers(1,&VBO_Tex);
     glDeleteBuffers(1,&EBO);
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -286,21 +450,30 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 }
 
 void ProcessInput(GLFWwindow* window) {
+        glm::vec3 oldPos = camera.Position;
     if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ESCAPE)) {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
 
+    if ( (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F))) {
+        camera.fly= camera.fly == true ? false  : true;
+        std::clog << camera.fly << std::endl;
+    }
     if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_W)) {
         camera.processKeyboard(FORWARD, deltaTime);
     }
     if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_S)) {
-        camera.processKeyboard(BACKWARD, deltaTime);
+            camera.processKeyboard(BACKWARD, deltaTime);
     }
     if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_A)) {
-        camera.processKeyboard(LEFT, deltaTime);
+            camera.processKeyboard(LEFT, deltaTime);
     }
     if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_D)) {
-        camera.processKeyboard(RIGHT, deltaTime);
+            camera.processKeyboard(RIGHT, deltaTime);
+
+    }
+    if (wallCollision(wallPos)) {
+        camera.Position = oldPos;
     }
 
 }
@@ -324,66 +497,6 @@ void mouseCallback(GLFWwindow* window, double xposIn, double yposIn) {
     lastY = ypos;
 
     camera.processMouse(xoffset, yoffset);
-}
-
-
-/*!
- *
- * @param fileName maze layout for now it is hard coded maze.txt
- * @param position is an array that holds the position of the walls
- *
- * in the if statements the E stand for EXIT and S for START
- * the # represents walls, ' ' clear path,
- */
-void loadLayout(std::string fileName, std::vector<glm::vec3>& position ) {
-    FILE* layout;
-    char element;
-    int row = 0;
-    int column = 0;
-    int numOfWalls = 0;
-    layout = std::fopen(fileName.c_str(), "r");
-    if (layout == NULL) {
-        std::cerr << "Could not open file " << fileName << std::endl;
-        exit(FILE_ERR);
-    }
-    while (!feof(layout)) {
-        element = std::fgetc(layout);
-        if (element == '\n') {
-            row += 1;
-            column = 0;
-
-        }
-        if (element == ' ') {
-            column += 1;
-        }
-
-        if (element == '#') {
-            numOfWalls++;
-            position.push_back(glm::vec3(column,0.0f,row)) ;
-            column++;
-        }
-        if (element == 'E') {
-            //TODO red particles light
-
-            column += 1;
-        }
-        if (element == 'S') {
-            //TODO green particles light
-
-            camera.Position= glm::vec3(column,0.0f,row) ;
-
-            column += 1;
-        }
-
-
-    }
-    if (layout != NULL) {
-        if (std::fclose(layout) != 0) {
-        std::cerr<<"File Didnt close properly" << std::endl;
-        }
-    }
-
-
 }
 
 
@@ -422,3 +535,20 @@ unsigned int loadImage(const char* filename) {
     return texture;
 
 }
+
+
+bool wallCollision(std::vector<Wall> walls) {
+    camera.updateCameraBoundingBox();
+    for (auto wall : walls) {
+            if (camera.bounding_box.intersec(wall.box)) {
+                return  true;
+            }
+
+    }
+
+    return false;
+
+}
+
+
+

@@ -5,7 +5,9 @@
 #include "Camera.h"
 
 
- Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM){
+ Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch, BoundingBox box)
+:Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM),
+bounding_box(Position.x-0.2f,0.0f,Position.z-0.2f,Position.x+0.2f,2.0f,Position.z +0.2f){
 
      Position = position;
      WorldUp = up;
@@ -15,11 +17,14 @@
 
 }
 
- Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch): Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM){
+ Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch, BoundingBox box):
+Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM),
+bounding_box(Position.x-0.2f,0.0f,Position.z-0.2f,Position.x+0.2f,2.0f,Position.z +0.2f){
      Position = glm::vec3(posX, posY, posZ);
      WorldUp = glm::vec3(upX, upY, upZ);
      Yaw = yaw;
      Pitch = pitch;
+     bounding_box = box;
      updateCameraVectors();
 
 }
@@ -39,8 +44,10 @@ void Camera::processKeyboard(CameraMovement direction, float deltaTime){
      if (direction == RIGHT) {
          Position += Right * velocity;
      }
+    if (!fly) {
 
      Position.y = 0.0f;
+    }
 }
 
 void Camera::processMouse(float xoffset, float yoffset, GLboolean constrainPitch){
@@ -73,6 +80,16 @@ void Camera::updateCameraVectors() {
      Right = glm::normalize(glm::cross(Front, WorldUp));
      Up = glm::normalize(glm::cross(Right, Front));
  }
+
+
+void Camera::updateCameraBoundingBox(){
+     bounding_box.minX = Position.x -0.1f;
+     bounding_box.minZ = Position.z -0.1f;
+     bounding_box.minY = Position.y -0.2f;
+     bounding_box.maxX = Position.x +0.1f;
+     bounding_box.maxZ = Position.z +0.1f;
+     bounding_box.maxY = Position.y +0.2f;
+}
 
 
 

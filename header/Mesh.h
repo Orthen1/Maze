@@ -14,12 +14,11 @@
 class Mesh {
 
 public:
-    template <size_t N>
-    Mesh(float (&vertex)[N]);
+    Mesh(float *vertex,int size);
     unsigned int GetVBO() { return VBO; };
 
 private:
-    float *vertecies;
+    std::vector<float> vertecies;
     unsigned int VBO;
 
 };
