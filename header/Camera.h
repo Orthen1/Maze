@@ -7,13 +7,12 @@
 #pragma once
 #include <glad/glad.h>
 
-
-#include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/glm.hpp>
 
 struct BoundingBox {
-    float minX, minY, minZ , maxX, maxY,maxZ;
-    BoundingBox(float minX, float minY, float minZ, float maxX ,float maxY, float maxZ) {
+    float minX, minY, minZ, maxX, maxY, maxZ;
+    BoundingBox(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) {
         this->minX = minX;
         this->minY = minY;
         this->minZ = minZ;
@@ -22,27 +21,16 @@ struct BoundingBox {
         this->maxZ = maxZ;
     }
 
-    bool intersec(BoundingBox &other) const {
-        return  minX <= other.maxX && maxX >= other.minX &&
-                minY <= other.maxY && maxY >= other.minY &&
-                minZ <= other.maxZ && maxZ >= other.minZ;
+    bool intersect(BoundingBox& other) const {
+        return minX <= other.maxX && maxX >= other.minX && minY <= other.maxY &&
+               maxY >= other.minY && minZ <= other.maxZ && maxZ >= other.minZ;
     }
 
     std::vector<float> boxToVertex() {
-        return {
-            minX,minY,minZ,
-            maxX,minY,minZ,
-            maxX,minY,maxZ,
-            minX,minY,maxZ,
+        return {minX, minY, minZ, maxX, minY, minZ, maxX, minY, maxZ, minX, minY, maxZ,
 
-            minX,maxY,minZ,
-            maxX,maxY,minZ,
-            maxX,maxY,maxZ,
-            minX,maxY,maxZ
-        };
-
+                minX, maxY, minZ, maxX, maxY, minZ, maxX, maxY, maxZ, minX, maxY, maxZ};
     };
-
 };
 
 enum CameraMovement {
@@ -52,18 +40,14 @@ enum CameraMovement {
     RIGHT,
 };
 
-
-const float YAW = -90.0f;
-const float PITCH = 0.0f;
-const float SPEED = 1.0f;
-const float SENSITIVITY = 0.1f;
-const float ZOOM = 45.0f;
-
-
+constexpr float YAW = -90.0f;
+constexpr float PITCH = 0.0f;
+constexpr float SPEED = 1.0f;
+constexpr float SENSITIVITY = 0.1f;
+constexpr float ZOOM = 45.0f;
 
 class Camera {
-
-public:
+   public:
     glm::vec3 Position;
     glm::vec3 Front;
     glm::vec3 Up;
@@ -81,28 +65,24 @@ public:
     bool fly = false;
     BoundingBox bounding_box;
 
+    Camera(
+        glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH,
+        BoundingBox box = BoundingBox(0.0f, 0.0f, 0.0f, 0.2f, 1.0f, 0.2f)
+    );
+    Camera(
+        float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch,
+        BoundingBox box
+    );
 
-    Camera( glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH , BoundingBox box = BoundingBox(0.0f,0.0f,0.0f,0.2f,1.0f,0.2f));
-    Camera( float posX,float posY, float posZ,float upX, float upY, float upZ,float yaw, float pitch, BoundingBox box );
-
-
-    glm::mat4 getViewMatrix() {
-        return glm::lookAt( Position, Position + Front, Up );
-    }
+    glm::mat4 getViewMatrix() const { return glm::lookAt(Position, Position + Front, Up); }
 
     void processKeyboard(CameraMovement direction, float deltaTime);
     void updateCameraBoundingBox();
     void processMouse(float xoffset, float yoffset, GLboolean constrainPitch = true);
 
-private:
+   private:
     void updateCameraVectors();
-
-
-
-
-
 };
 
-
-
-#endif //MAZE_CAMERA_H
+#endif  // MAZE_CAMERA_H

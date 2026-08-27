@@ -1,2 +1,2 @@
 wall texture - by ZachVance https://www.deviantart.com/zachvance/art/Dungeon-Wall-Classic-Tile-683633415
-floor/ cieling texture - by MakeStuffHappen https://www.deviantart.com/makestuffhapen/art/Dungeon-Floor-01-423456584
+floor/ ceiling texture - by MakeStuffHappen https://www.deviantart.com/makestuffhapen/art/Dungeon-Floor-01-423456584
