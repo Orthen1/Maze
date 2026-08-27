@@ -30,7 +30,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void ProcessInput(GLFWwindow* window);
 void mouseCallback(GLFWwindow* window, double xposIn, double yposIn);
 unsigned int loadImage(const char* filename);
-bool wallCollision(std::vector<Wall> walls);
+bool wallCollision(Grid &grid);
 
 
 /**ERROR CODE**/
@@ -48,16 +48,15 @@ bool firstMouse = true;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-std::vector<Wall> wallPos;
 
 
+Grid grid(10,10);
 
 int main(int argc, char *args[]) {
 
 
 
     const glm::vec4 background_color(0.0,0.0,0.0,1.0);
-    Grid grid(5,5);
 
 
 
@@ -144,35 +143,12 @@ int main(int argc, char *args[]) {
 
     };
 
-   // loadLayout("../maze.txt", wallPos);
-    camera.Position = grid.generateWalls(wallPos);
+
+
+
+    camera.Position = grid.generateWalls();
 #if TEST
     grid.printMaze();
-
-    for (int y = 0; y < grid.getRows(); ++y) {
-        for (int x = 0; x < grid.getCols(); ++x) {
-
-            Tile* tile = grid.getTile(x, y);
-
-            std::cout << "(" << x << "," << y << "): ";
-
-            if (tile->direction & N)
-                std::cout << "N ";
-
-            if (tile->direction & S)
-                std::cout << "S ";
-
-            if (tile->direction & E)
-                std::cout << "E ";
-
-            if (tile->direction & W)
-                std::cout << "W ";
-
-            std::cout << '\n';
-        }
-    }
-
-
 
 #endif
 
@@ -203,7 +179,7 @@ int main(int argc, char *args[]) {
         return -1;
     }
 
-    // Callback Functions fo;r GLFW //
+    // Callback Functions for GLFW //
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
@@ -253,10 +229,14 @@ int main(int argc, char *args[]) {
 
     //** TEXTURE DEFINITION **//
 
-    unsigned int texture = loadImage("../textures/shrub.jpg");
+    unsigned int wallTexture = loadImage("../textures/wall.jpg");
 
     shader.use();
     shader.setInt("texture", 0);
+
+    unsigned int floorTexture = loadImage("../textures/floor.jpg");
+    shader.use();
+    shader.setInt("texture",1);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -267,11 +247,11 @@ int main(int argc, char *args[]) {
 
 
     unsigned int counter = 0;
-    for (auto wall : wallPos){
+    for (auto wall : grid.getWalls()){
 
         uint base = counter *8;
 
-        std::vector<float> boxVerts = wall.box.boxToVertex();
+        std::vector<float> boxVerts = wall->box.boxToVertex();
         unitBoxVerts.insert(unitBoxVerts.end(),boxVerts.begin(),boxVerts.end());
         boxLineIndices.insert(boxLineIndices.end(), {
 
@@ -326,7 +306,7 @@ int main(int argc, char *args[]) {
     #if TEST
         double fps = 1/ deltaTime;
        std::clog << "FPS:" << fps << std::endl;
-        std::cout <<"is hitting a wall:" << wallCollision(wallPos) << std::endl;
+        std::cout <<"is hitting a wall:" << wallCollision(grid) << std::endl;
     #endif
         //Input Process //
         ProcessInput(window);
@@ -336,7 +316,8 @@ int main(int argc, char *args[]) {
 
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, wallTexture);
+
         // Rendering Process //
         shader.use();
 
@@ -348,17 +329,17 @@ int main(int argc, char *args[]) {
         glm::mat4 view = camera.getViewMatrix();
         shader.setMat4("view",view);
 
-      /*  for (auto wall: wallPos){
-            if (!wall.visible) {
+        for (auto wall: grid.getWalls()){
+            if (!wall->visible) {
                 continue;
             }
             glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, wall.position);
+            model = glm::translate(model, wall->position );
 
-            if (wall.vertical == true) {
-                model = glm::scale(model,glm::vec3(wall.thickness,1.0f,1.0f));
+            if (wall->vertical == true) {
+                model = glm::scale(model,glm::vec3(wall->thickness,1.0f,1.0f));
             }else {
-                model = glm::scale(model,glm::vec3(1.0f,1.0f,wall.thickness));
+                model = glm::scale(model,glm::vec3(1.0f,1.0f,wall->thickness));
             }
 
             shader.setMat4("model",model);
@@ -367,29 +348,20 @@ int main(int argc, char *args[]) {
 
 
 
-        }*/
-
-        for (auto &tile: grid.getTiles()) {
-            if (tile->wall != nullptr) {
-                glm::mat4 model = glm::mat4(1.0f);
-                model = glm::translate(model, tile->wall->position);
-
-                if (tile->wall->vertical == true) {
-                    model = glm::scale(model,glm::vec3(tile->wall->thickness,1.0f,1.0f));
-                }else {
-                    model = glm::scale(model,glm::vec3(1.0f,1.0f,tile->wall->thickness));
-                }
-
-
-                shader.setMat4("model",model);
-                glBindVertexArray(VAO);
-                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-
-
-            }
-
         }
+        glBindTexture(GL_TEXTURE_2D, floorTexture);
+        for (auto &cell: grid.getCells()) {
+            auto tile = cell->tiles[NONE];
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(tile->position.x,tile->position.y-0.01f,tile->position.z));
+            shader.setMat4("model",model);
+            glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,(void*)(24*sizeof(unsigned int)));
+            model=glm::translate(model,glm::vec3(0.0f,0.02f,0.0f));
+            shader.setMat4("model",model);
+            glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,(void*)(30*sizeof(unsigned int)));
+        }
+
+
 
 #if TEST
         glDisable(GL_DEPTH_TEST);
@@ -397,7 +369,7 @@ int main(int argc, char *args[]) {
         Bbox.use();
         Bbox.setMat4("view",view);
         Bbox.setMat4("projection",projection);
-       for (auto wall : wallPos) {
+       for (auto wall : grid.getWalls()) {
           glm::mat4 model = glm::mat4(1.0f);
             Bbox.setMat4("model",model);
             glBindVertexArray(VAO_Collisions);
@@ -457,6 +429,7 @@ void ProcessInput(GLFWwindow* window) {
 
     if ( (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F))) {
         camera.fly= camera.fly == true ? false  : true;
+        camera.collisionsOn = camera.collisionsOn == true ? false : true;
         std::clog << camera.fly << std::endl;
     }
     if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_W)) {
@@ -472,7 +445,7 @@ void ProcessInput(GLFWwindow* window) {
             camera.processKeyboard(RIGHT, deltaTime);
 
     }
-    if (wallCollision(wallPos)) {
+    if (wallCollision(grid)) {
         camera.Position = oldPos;
     }
 
@@ -537,10 +510,13 @@ unsigned int loadImage(const char* filename) {
 }
 
 
-bool wallCollision(std::vector<Wall> walls) {
+bool wallCollision(Grid &grid) {
+    if (!camera.collisionsOn) {
+        return false;
+    }
     camera.updateCameraBoundingBox();
-    for (auto wall : walls) {
-            if (camera.bounding_box.intersec(wall.box)) {
+    for (auto wall : grid.getWalls()) {
+            if (camera.bounding_box.intersec(wall->box)) {
                 return  true;
             }
 

@@ -76,6 +76,8 @@ public:
     float MovementSpeed;
     float MouseSensitivity;
     float Zoom;
+
+    bool collisionsOn = true;
     bool fly = false;
     BoundingBox bounding_box;
 

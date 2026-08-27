@@ -23,22 +23,22 @@
 
      for (int i = 0; i < rows; i++) {
          for (int j = 0; j < cols; j++) {
-             tiles.push_back(std::make_unique<Tile>(i,j));
+             cells.push_back(std::make_unique<Cell>(glm::vec2(i,j)));
+                for (int k = 0; k < 5; k++) {
+                    getCell(i,j)->tiles[k] = std::make_shared<Tile>();
+                }
+             getCell(i,j)->tiles[NONE]->position = glm::vec3(i,0.0f,j);
+             getCell(i,j)->tiles[N]->position = glm::vec3(i-1.0f,0.0f,j);
+             getCell(i,j)->tiles[S]->position = glm::vec3(i+1.0f,0.0f,j);
+             getCell(i,j)->tiles[W]->position = glm::vec3(i,0.0f,j-1.0f);
+             getCell(i,j)->tiles[E]->position = glm::vec3(i,0.0f,j+1.0f);
          }
      }
 
 
 }
 
-Tile* Grid::getTile(unsigned int posX, unsigned int posY) const{
 
-     for (auto &tile : tiles){
-         if (tile->posX == posX && tile->posY == posY) {
-             return tile.get();
-         }
-     }
-     return nullptr;
-}
 
 glm::vec3 Grid::generateMaze() {
 
@@ -48,40 +48,48 @@ glm::vec3 Grid::generateMaze() {
 
     int posX = maxX(r_device);
     int posY = maxY(r_device);
-     glm::vec3 CameraPos(posX,0,posY);
-    std::vector<Tile*> frontier, adjecent;
-    mark(posX,posY,frontier);
+     glm::vec2 position(posX,posY);
+     glm::vec3 CameraPos(position.x,0,position.y);
+    std::vector<Cell*> frontier, adjecent;
+    mark(position.x,position.y,frontier);
 
     while (!frontier.empty()) {
 
         std::uniform_int_distribution<int> length(0,frontier.size()-1);
         int index = length(r_device);
-        Tile* current = frontier.at(index);
-
-        posX = current->posX;
-        posY = current->posY;
+        Cell* current = frontier.at(index);
+        position = current->position;
 
         frontier[index] = frontier.back();
         frontier.pop_back();
 
-        adjecent = neighbours(posX,posY);
+        adjecent = neighbours(position.x,position.y);
         std::uniform_int_distribution<int> neigbour(0, adjecent.size() -1);
         index = neigbour(r_device);
-        Tile* n = adjecent.at(index);
-        int nx = n->posX;
-        int ny = n->posY;
-        Directions dir = directions(posX, posY,nx,ny);
-        getTile(posX,posY)->direction |= dir;
-        getTile(nx,ny)->direction |= opositions(dir);
-        mark(posX,posY,frontier);
+        Cell* n = adjecent.at(index);
+        int nx = n->position.x;
+        int ny = n->position.y;
+        BIT_DIR dir = directions(position.x, position.y,nx,ny);
+        getCell(position.x,position.y)->direction |= dir;
+        getCell(nx,ny)->direction |= opositions(dir);
+        mark(position.x,position.y,frontier);
 
     }
      return CameraPos;
 
 }
 
-void Grid::addFrontier(int posX,int posY ,std::vector<Tile*> &frontier) {
-        auto tmp = getTile(posX,posY);
+
+void Grid::mark(int posX, int posY,std::vector<Cell*> &frontier) {
+     getCell(posX,posY)->not_carved = false;
+     addFrontier(posX-1,posY,frontier);
+     addFrontier(posX+1,posY,frontier);
+     addFrontier(posX,posY-1,frontier);
+     addFrontier(posX,posY+1,frontier);
+ }
+
+void Grid::addFrontier(int posX,int posY ,std::vector<Cell*> &frontier) {
+        auto tmp = getCell(posX,posY);
         if (tmp != nullptr && tmp->frontier == false && tmp->not_carved == true) {
             tmp->frontier = true;
             frontier.push_back(tmp);
@@ -89,176 +97,174 @@ void Grid::addFrontier(int posX,int posY ,std::vector<Tile*> &frontier) {
 }
 
 
-void Grid::mark(int posX, int posY,std::vector<Tile*> &frontier) {
-    getTile(posX,posY)->not_carved = false;
-    addFrontier(posX-1,posY,frontier);
-    addFrontier(posX+1,posY,frontier);
-    addFrontier(posX,posY-1,frontier);
-    addFrontier(posX,posY+1,frontier);
-}
-
-
-std::vector<Tile*>  Grid::neighbours(int posX,int posY) const {
-        std::vector<Tile*> neighbours;
-        if (posX > 0 &&  getTile(posX -1, posY)->not_carved == false) {
-            neighbours.push_back(getTile(posX-1,posY));
+std::vector<Cell*>  Grid::neighbours(int posX,int posY) const {
+        std::vector<Cell*> neighbours;
+        if (posX > 0 &&  getCell(posX -1, posY)->not_carved == false) {
+            neighbours.push_back(getCell(posX-1,posY));
         }
-        if (posX +1 < cols && getTile(posX+1,posY)->not_carved == false) {
-            neighbours.push_back(getTile(posX+1,posY));
+        if (posX +1 < cols && getCell(posX+1,posY)->not_carved == false) {
+            neighbours.push_back(getCell(posX+1,posY));
         }
-        if (posY > 0 && getTile(posX,posY-1)->not_carved == false) {
-            neighbours.push_back(getTile(posX,posY-1));
+        if (posY > 0 && getCell(posX,posY-1)->not_carved == false) {
+            neighbours.push_back(getCell(posX,posY-1));
         }
-        if (posY + 1 <  rows && getTile(posX,posY+1)->not_carved == false) {
-            neighbours.push_back(getTile(posX,posY+1));
+        if (posY + 1 <  rows && getCell(posX,posY+1)->not_carved == false) {
+            neighbours.push_back(getCell(posX,posY+1));
         }
 
     return neighbours;
 
 }
 
-Directions Grid::directions(int fx,int fy,int tx,int ty) {
+BIT_DIR Grid::directions(int fx,int fy,int tx,int ty) {
 
-    Directions dir;
     if (fx < tx) {
-        dir =  E;
+        return   E_BIT;
     }
     if (fx > tx) {
-        dir =  W;
+        return   W_BIT;
     }
     if (fy < ty) {
-        dir = S;
+        return S_BIT;
     }
 
     if (fy > ty) {
-        dir = N;
+        return N_BIT;
     }
 
-    return dir;
 }
 
 
-glm::vec3 Grid::generateWalls( std::vector<Wall> &walls) {
+glm::vec3 Grid::generateWalls() {
     glm::vec3 startPos = generateMaze();
     float offset = 0.5f;
 
-    for (auto &tile : tiles){
+    for (auto &cell : cells){
 
 
-        if (tile->posX == 0) {
-            glm::vec3 pos = glm::vec3(static_cast<float>(tile->posX) - offset, 0 , static_cast<float>(tile->posY));
-            addWall(walls,pos,true);
+        if (cell->position.x == 0) {
+            glm::vec3 pos = glm::vec3(cell->position.x - offset, 0 , cell->position.y);
+            cell->tiles[W]->wall = addWall(pos,true);
         }
 
-        if (tile->posY == 0) {
-            glm::vec3 pos = glm::vec3(static_cast<float>(tile->posX), 0 , static_cast<float>(tile->posY) - offset);
-            addWall(walls,pos,false);
+        if (cell->position.y == 0) {
+            glm::vec3 pos = glm::vec3(cell->position.x , 0 , cell->position.y - offset);
+            cell->tiles[N]->wall = addWall(pos,false);
         }
 
 
         // Right border
-        if (tile->posX == this->getCols() - 1) {
-            addWall(walls, glm::vec3(static_cast<float>(tile->posX) + offset , 0, static_cast<float>(tile->posY) ),true);
+        if (cell->position.x == cols - 1) {
+            glm::vec3 pos = glm::vec3(cell->position.x + offset,0, cell->position.y);
+            cell->tiles[E]->wall = addWall(pos,true);
         }
         // Bottom border
-        if (tile->posY == this->getRows() - 1) {
-            addWall(walls, glm::vec3(static_cast<float>(tile->posX), 0, static_cast<float>(tile->posY) + offset),false);
+        if (cell->position.y == rows - 1) {
+
+            glm::vec3 pos = glm::vec3(cell->position.x,0.0f,cell->position.y + offset);
+            cell->tiles[S]->wall = addWall(pos,false);
         }
 
-        if (tile->posX < this->getCols() - 1 &&!(tile->direction & E))
-        {
-                addWall(walls, glm::vec3(static_cast<float>(tile->posX) + offset , 0, static_cast<float>(tile->posY) ),true);
+        if (cell->position.x < cols - 1 &&!(cell->direction & E_BIT))
+        {       glm::vec3 pos = glm::vec3(cell->position.x + offset, 0.0f, cell->position.y);
+                cell->tiles[E]->wall = addWall(pos,true);
         }
 
-        if (tile->posY < this->getRows() - 1 &&!(tile->direction & S)){
-                addWall(walls, glm::vec3(static_cast<float>(tile->posX), 0, static_cast<float>(tile->posY)  + offset),false);
-            }
+        if (cell->position.y < rows - 1 &&!(cell->direction & S_BIT)){
+                glm::vec3 pos = glm::vec3(cell->position.x,0.0f,cell->position.y +offset);
+                cell->tiles[S]->wall = addWall(pos,false);
+        }
 
     }
-     generateGrid(walls);
-     //getExit(walls);
+     createExit();
      return startPos;
 
 }
 
 
 
-    void Grid::printMaze() const{
-            for (int y = 0; y < rows; ++y) {
+void Grid::printMaze() const {
+     for (int y = 0; y < rows; ++y) {
 
-                // TOP WALLS
-                for (int x = 0; x < cols; ++x) {
-                    Tile* tile = getTile(x, y);
+         // NORTH WALLS
+         for (int x = 0; x < cols; ++x) {
+             Cell* cell = getCell(x, y);
 
-                    std::cout << "#";
+             std::cout << "#";
 
-                    if (tile->direction & N)
-                        std::cout << " ";
-                    else
-                        std::cout << "#";
-                }
-                std::cout << "#\n";
+             if (cell->direction & N_BIT)
+                 std::cout << " ";
+             else
+                 std::cout << "#";
+         }
 
-
-                // LEFT/RIGHT WALLS
-                for (int x = 0; x < getCols(); ++x) {
-                    Tile* tile = getTile(x, y);
-
-                    if (tile->direction & W)
-                        std::cout << " ";
-                    else
-                        std::cout << "#";
-
-                    std::cout << " ";
-                }
-
-                // RIGHT BORDER
-                Tile* last = getTile(cols - 1, y);
-
-                if (last->direction & E)
-                    std::cout << " ";
-                else
-                    std::cout << "#";
-
-                std::cout << "\n";
-            }
+         std::cout << "#\n";
 
 
-            // BOTTOM WALL
-            for (int x = 0; x < cols; ++x) {
-                Tile* tile = getTile(x, rows - 1);
+         // WEST / EAST WALLS
+         for (int x = 0; x < cols; ++x) {
+             Cell* cell = getCell(x, y);
 
-                std::cout << "#";
+             if (cell->direction & W_BIT)
+                 std::cout << " ";
+             else
+                 std::cout << "#";
 
-                if (tile->direction & S)
-                    std::cout << " ";
-                else
-                    std::cout << "#";
-            }
+             std::cout << " ";
+         }
 
-            std::cout << "#\n";
-        }
+         // EAST BORDER
+         Cell* last = getCell(cols - 1, y);
+
+         if (last->direction & E_BIT)
+             std::cout << " ";
+         else
+             std::cout << "#";
+
+         std::cout << "\n";
+     }
 
 
-void Grid::addWall(std::vector<Wall>& walls, const glm::vec3& pos, bool vertical)
+     // SOUTH WALLS
+     for (int x = 0; x < cols; ++x) {
+         Cell* cell = getCell(x, rows - 1);
+
+         std::cout << "#";
+
+         if (cell->direction & S_BIT)
+             std::cout << " ";
+         else
+             std::cout << "#";
+     }
+
+     std::cout << "#\n";
+ }
+
+
+std::shared_ptr<Wall> Grid::addWall( const glm::vec3& pos, bool vertical)
 {
     for (const auto& wall : walls) {
-        if (wall.position == pos) {
+        if (wall->position == pos) {
 
-            return;
+            return nullptr;
         }
     }
      if (vertical) {
-
-    walls.push_back({pos,vertical,BoundingBox(pos.x - 0.05f, -0.5f,pos.z-0.5f,pos.x+0.05f , 0.5f,pos.z +0.5f)});
+    std::shared_ptr<Wall> wall = std::make_shared<Wall>(pos,vertical,
+        BoundingBox(pos.x - 0.05f, -0.5f,pos.z-0.5f,pos.x+0.05f , 0.5f,pos.z +0.5f));
+    walls.push_back(wall);
+         return  wall;
      }else {
-         walls.push_back({pos,vertical,BoundingBox(pos.x - 0.5f, -0.5f,pos.z-0.05f,pos.x+0.5f , 0.5f,pos.z +0.05f)});
+         std::shared_ptr<Wall> wall = std::make_shared<Wall>(pos,vertical,
+             BoundingBox(pos.x - 0.5f, -0.5f,pos.z-0.05f,pos.x+0.5f , 0.5f,pos.z +0.05f));
+         walls.push_back(wall);
+         return wall;
      }
 }
 
 
 
-void Grid::getExit(std::vector<Wall>& walls) {
+void Grid::createExit() {
      std::mt19937 r_device(std::random_device{}());
      std::uniform_int_distribution<int> maxX(0,cols-1);
      std::uniform_int_distribution<int> maxY(0,rows -1);
@@ -272,12 +278,12 @@ void Grid::getExit(std::vector<Wall>& walls) {
          posY = toss(r_device) == 0 ? 0: cols -1;
      }
 
-     removeWall(walls,posX,posY);
+     removeWall(posX,posY);
 
  }
 
 
-void Grid::removeWall(std::vector<Wall>& walls,int posX, int posY) const  {
+void Grid::removeWall(int posX, int posY) const  {
     float offset= 0.5f;
      glm::vec3 target;
      if (posX == 0) {
@@ -289,39 +295,37 @@ void Grid::removeWall(std::vector<Wall>& walls,int posX, int posY) const  {
      } else { // posY == cols - 1
          target = glm::vec3(posX, 0, posY + offset);
      }
-    auto wallToRemove = std::find_if(walls.begin(),walls.end(), [&](const Wall& wall){
-        return wall.position == target;
+    auto wallToRemove = std::find_if(walls.begin(),walls.end(), [&](const std::shared_ptr<Wall>& wall){
+        return wall->position == target;
     });
 
     if (wallToRemove != walls.end()) {
-     wallToRemove->visible = false;
+     (*wallToRemove)->visible = false;
      }
 
 
  }
 
 
-void Grid::generateGrid(std::vector<Wall> &walls) {
-     float offset= 0.5f;
-     for (auto &tile: tiles) {
 
-         glm::vec3 target;
-         if (tile->posX == 0) {
-             target = glm::vec3(tile->posX - offset, 0, tile->posY);
-         } else if (tile->posX == rows - 1) {
-             target = glm::vec3(tile->posX + offset, 0, tile->posY);
-         } else if (tile->posY == 0) {
-             target = glm::vec3(tile->posX, 0, tile->posY - offset);
-         } else { // posY == cols - 1
-             target = glm::vec3(tile->posX, 0, tile->posY + offset);
-         }
-         for (auto &wall : walls) {
-            if (target == wall.position) {
-                tile->wall = &wall;
-            }
 
+//**Getters and Setters**//
+
+
+Cell* Grid::getCell(glm::vec2 position) const{
+     for (auto& cell : cells){
+        if (position.x == cell->position.x && position.y == cell->position.y) {
+            return cell.get();
+        }
+     }
+     return nullptr;
+ }
+
+Cell* Grid::getCell(int posX, int posY) const{
+     for (auto& cell : cells){
+         if (posX == cell->position.x && posY == cell->position.y) {
+             return cell.get();
          }
      }
-
-
+     return nullptr;
  }
