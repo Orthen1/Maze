@@ -12,3 +12,5 @@ SpaceBeforeParens: ControlStatements
 InsertBraces: true
 AlignAfterOpenBracket: BlockIndent
 AlignConsecutiveMacros: AcrossEmptyLines
+BinPackArguments: true
+Cpp11BracedListStyle: true

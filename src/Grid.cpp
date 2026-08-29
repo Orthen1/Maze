@@ -138,20 +138,43 @@ std::shared_ptr<Wall> Grid::addWall(const glm::vec3& pos) {
 }
 
 void Grid::createExit() {
-    std::mt19937 r_device(std::random_device{}());
-    std::uniform_int_distribution<int> maxX(0, cols - 1);
-    std::uniform_int_distribution<int> maxY(0, rows - 1);
-    std::uniform_int_distribution<int> toss(0, 1);
+    std::vector<Cell*> candidates;
 
-    int posX = maxX(r_device);
-    int posY;
-    if (posX == 0 || posX == rows - 1) {
-        posY = maxY(r_device);
-    } else {
-        posY = toss(r_device) == 0 ? 0 : cols - 1;
+    for (auto& cell : cells) {
+        if (cell->isWall) {
+            continue;
+        }
+
+        bool onBorder =
+            (cell->worldPos.x == 1 || cell->worldPos.x == cols - 2 || cell->worldPos.z == 1 ||
+             cell->worldPos.z == rows - 2);
+        if (onBorder) {
+            candidates.push_back(cell.get());
+        }
     }
 
-    removeWall(posX, posY);
+    if (candidates.empty()) {
+        std::cerr << "No open border cell found for exit" << std::endl;
+        return;
+    }
+
+    std::mt19937 r_device(std::random_device{}());
+    std::uniform_int_distribution<int> pick(0, candidates.size() - 1);
+    Cell* chosen = candidates[pick(r_device)];
+    int wallX = chosen->worldPos.x;
+    int wallY = chosen->worldPos.z;
+
+    if (chosen->worldPos.x == 1) {
+        wallX = 0;
+    } else if (chosen->worldPos.x == cols - 2) {
+        wallX = cols - 1;
+    } else if (chosen->worldPos.z == 1) {
+        wallY = 0;
+    } else if (chosen->worldPos.z == rows - 2) {
+        wallY = rows - 1;
+    }
+
+    removeWall(wallX, wallY);
 }
 
 void Grid::removeWall(int posX, int posY) const {
@@ -184,4 +207,13 @@ Cell* Grid::getCell(int posX, int posY) const {
         }
     }
     return nullptr;
+}
+
+glm::vec3 Grid::getExit() {
+    for (auto& wall : walls) {
+        if (!wall->visible) {
+            return wall->position;
+        }
+    }
+    return glm::vec3(-1.0);
 }

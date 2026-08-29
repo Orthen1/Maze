@@ -19,6 +19,14 @@ set(SOURCE_FILES src/main.cpp src/glad.c src/stb_image.cpp
         src/Grid.cpp
         header/Grid.h
         header/Grid.h
+        header/main.h
+        src/Particles.cpp
+        header/Particles.h
+        header/Particles.h
+        header/Light.h
+        src/ParticlesPool.cpp
+        header/ParticlesPool.h
+        header/BoundingBox.h
 )
 
 add_executable(Maze ${SOURCE_FILES})

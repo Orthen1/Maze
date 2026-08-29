@@ -36,6 +36,7 @@ class Grid {
     Cell* getCell(glm::vec2 position) const;
     int getCols() const { return cols; };
     int getRows() const { return rows; };
+    glm::vec3 getExit();
     glm::vec3 generateWalls();
     void printMaze() const;
     void setRows(int rowsIn) { this->rows = rowsIn; };
