@@ -28,7 +28,6 @@
 /** DEFINES **/
 #define SCR_HEIGHT       600
 #define SCR_WIDTH        600
-#define MAX_POINT_LIGHTS 128
 #define MAX_PARTICLES    12000
 #define TEST             0
 #define FPS              1
@@ -50,6 +49,12 @@ enum ERR_CODE {
     GLFW_FAIL = -1,
     SUCCESS = 0,
 };
+/**FLAGS**/
+bool debugBox;
+bool debugGrid;
+
+
+
 
 /** GLOBAL VARIABLES **/
 

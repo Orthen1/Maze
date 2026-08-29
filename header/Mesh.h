@@ -8,7 +8,7 @@
 // clang-format off
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
+#include <vector>
 #include <glm/glm.hpp>
 //clang-format on
 struct vertAttribute {
@@ -20,7 +20,7 @@ class Mesh {
    public:
     Mesh(
         std::vector<float> vertex, int size, std::vector<vertAttribute> attributes,
-        std::vector<uint> indeces = {}, int indexCount = 0
+        std::vector<unsigned int> indeces = {}, int indexCount = 0
     );
     unsigned int getVAO() { return VAO; };
 

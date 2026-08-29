@@ -6,6 +6,7 @@
 #define MAZE_PARTICLESPOOL_H
 #pragma once
 #include <memory>
+#include <vector>
 
 #include "Particles.h"
 
@@ -21,8 +22,8 @@ class ParticlesPool {
     std::unique_ptr<std::vector<Particles>> particlesPool;
     int maxSize;
     int currentAlive;
-    uint VAO;
-    uint VBO;
+    unsigned int VAO;
+    unsigned int VBO;
 };
 
 #endif  // MAZE_PARTICLESPOOL_H

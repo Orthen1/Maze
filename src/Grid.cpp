@@ -2,7 +2,7 @@
 // Created by teo on 24. 8. 2026.
 //
 
-#include "../header/Grid.h"
+#include "Grid.h"
 
 #include <algorithm>
 #include <iostream>
@@ -28,8 +28,8 @@ void Grid::Init() {
 
 glm::vec3 Grid::generateMaze() {
     std::mt19937 r_device(std::random_device{}());
-    std::uniform_int_distribution<uint> maxY(0, (rows / 2 - 1));
-    std::uniform_int_distribution<uint> maxX(0, (cols / 2 - 1));
+    std::uniform_int_distribution<unsigned int> maxY(0, (rows / 2 - 1));
+    std::uniform_int_distribution<unsigned int> maxX(0, (cols / 2 - 1));
     int posX = 2 * maxX(r_device) + 1;
     int posY = 2 * maxY(r_device) + 1;
     glm::vec2 position(posX, posY);
