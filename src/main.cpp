@@ -1,8 +1,6 @@
 
 #include "main.h"
 
-#include "Batch.h"
-
 int main(int argc, char* args[]) {
     // TODO help function
     if (argc >= 2) {
@@ -140,11 +138,8 @@ int main(int argc, char* args[]) {
     ParticlesPool particles(MAX_PARTICLES);
 
 
-    //**Wall Batching **//
 
 
-
-    //** Floor and Cieling Batching **//
     BatchGeometry mazeWallsBatch = createWallBatch(grid,cubeVertices,indeces);
     BatchGeometry floorBatch =createFloorBatch(grid,exitPos) ;
     BatchGeometry ceilingBatch = createCeilingBatch(grid,exitPos);

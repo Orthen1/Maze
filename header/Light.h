@@ -8,12 +8,12 @@
 #pragma once
 
 #define MAX_POINT_LIGHTS 128
-#include "Grid.h"
 #include <vector>
-class Light {
-public:
 
-    static std::vector<Light> generatePointLight( Grid &grid,float minSpacing);
+#include "Grid.h"
+class Light {
+   public:
+    static std::vector<Light> generatePointLight(Grid& grid, float minSpacing);
 
     glm::vec3 position;
     float constant;

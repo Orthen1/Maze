@@ -24,15 +24,16 @@
 #include "ParticlesPool.h"
 #include "Shader.h"
 #include "stb_image.h"
+#include "Batch.h"
 // clang-format on
 /** DEFINES **/
-#define SCR_HEIGHT       600
-#define SCR_WIDTH        600
-#define MAX_PARTICLES    12000
-#define TEST             0
-#define FPS              1
-#define BOUNDING_BOX     0
-#define GRID             0
+#define SCR_HEIGHT    600
+#define SCR_WIDTH     600
+#define MAX_PARTICLES 12000
+#define TEST          0
+#define FPS           1
+#define BOUNDING_BOX  0
+#define GRID          0
 
 /**  Prototypes **/
 
@@ -52,9 +53,6 @@ enum ERR_CODE {
 /**FLAGS**/
 bool debugBox;
 bool debugGrid;
-
-
-
 
 /** GLOBAL VARIABLES **/
 

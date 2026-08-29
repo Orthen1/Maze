@@ -22,11 +22,6 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glfw)
 
-if(WIN32)
-    add_compile_definitions(PLATFORM_WINDOWS)
-else ()
-    add_compile_definitions(PLATFORM_LINUX)
-endif ()
 
 
 
@@ -64,10 +59,20 @@ set(SOURCE_FILES src/main.cpp src/glad.c src/stb_image.cpp
 
 add_executable(Maze ${SOURCE_FILES})
 
-target_link_libraries(Maze PRIVATE glfw glm::glm)
+if(WIN32)
+    add_compile_definitions(PLATFORM_WINDOWS)
 
-if (WIN32)
+    target_link_options(Maze PRIVATE
+            -static-libgcc
+            -static-libstdc++
+
+    )
+
     target_link_libraries(Maze PRIVATE opengl32)
 else()
+    add_compile_definitions(PLATFORM_LINUX)
+
     target_link_libraries(Maze PRIVATE GL)
 endif()
+target_link_libraries(Maze PRIVATE glfw glm::glm)
+

@@ -34,7 +34,8 @@ Mesh::Mesh(
         glGenBuffers(1, &EBO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(unsigned int), indeces.data(), GL_STATIC_DRAW
+            GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(unsigned int), indeces.data(),
+            GL_STATIC_DRAW
         );
     }
 
