@@ -17,6 +17,7 @@ std::vector<Light> Light::generatePointLight(Grid& grid, float minSpacing) {
             glm::vec3 position(cell->worldPos.x, cell->worldPos.y, cell->worldPos.z);
             bool tooClose = false;
             for (auto& exist : lights) {
+                // Check if light randomized position is'nt too close to other light sources
                 if (glm::distance(exist.position, position) < minSpacing) {
                     tooClose = true;
                     break;

@@ -27,7 +27,10 @@ ParticlesPool::ParticlesPool(int max) : particlesPool(std::make_unique<std::vect
 }
 
 void ParticlesPool::Pour(glm::vec3 pos, int particlesPerFrame, float deltaTime) {
-    for (int i = 0; i < particlesPerFrame; i++) {
+    int spawnParticles = particlesPerFrame * deltaTime;
+    int toSpawn = static_cast<int>(spawnParticles);
+
+    for (int i = 0; i < toSpawn; i++) {
         float vx = ((rand() % 100) / 100.f - 0.5f) * 0.2f;
         float vz = ((rand() % 100) / 100.f - 0.5f) * 0.2f;
         float speed = -1.5f * (rand() % 50) / 100.f;
@@ -47,8 +50,16 @@ void ParticlesPool::Spawn(glm::vec3 position, glm::vec3 velocity) {
 }
 
 void ParticlesPool::Update(float deltaTime) {
-    for (auto& particles : *particlesPool) {
-        particles.Update(deltaTime);
+    int i = 0;
+    while (i < currentAlive) {
+        Particles& p = particlesPool->at(i);
+        p.Update(deltaTime);
+        if (p.alive == false) {
+            std::swap(p, particlesPool->at(currentAlive - 1));
+            currentAlive--;
+        } else {
+            i++;
+        }
     }
 }
 
@@ -64,7 +75,9 @@ void ParticlesPool::Render() {
         positions.push_back(particlesPool->at(i).getPosition());
     }
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, std::size(positions), positions.data(), GL_DYNAMIC_DRAW);
+    glBufferData(
+        GL_ARRAY_BUFFER, sizeof(glm::vec3) * positions.size(), positions.data(), GL_DYNAMIC_DRAW
+    );
 
     glBindVertexArray(VAO);
     glEnable(GL_PROGRAM_POINT_SIZE);

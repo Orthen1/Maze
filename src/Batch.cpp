@@ -3,7 +3,10 @@
 //
 
 #include "Batch.h"
-
+/**
+ * @brief Builds a single batched mesh containing every visible wall, by
+ *        instancing `cubeVertices`/`indeces` (one cube) at each wall's position.
+ */
 BatchGeometry createWallBatch(
     Grid& grid, const std::vector<float>& cubeVertices, const std::vector<unsigned int>& indeces
 ) {
@@ -35,63 +38,64 @@ BatchGeometry createWallBatch(
 
     return {mazeWallVerteces, mazeWallIndeces};
 }
+/**
+ * @brief Builds a batched mesh of horizontal quads (one per open/exit cell),
+ *        used for both the floor and ceiling.
+ * @param grid     The maze grid to read cells from.
+ * @param exitPos  World-space position of the exit cell — included even
+ *                  though it's technically a wall cell, so the exit opening
+ *                  still gets floor/ceiling geometry.
+ * @param yOffset  Vertical offset from each cell's worldPos (e.g. -0.5 for
+ *                  floor, +0.5x for ceiling).
+ * @param normalY  Y component of the quad's normal (1.0 facing up for
+ *                  floor, -1.0 facing down for ceiling).
+ */
+BatchGeometry createHorizontalQuadBatch(
+    Grid& grid, const glm::vec3 exitPos, float yOffset, float normalY
+) {
+    std::vector<float> verts;
+    std::vector<unsigned int> idx;
+    unsigned int counter = 0;
+
+    for (auto& cell : grid.getCells()) {
+        if (cell->isWall && (cell->worldPos != exitPos)) {
+            continue;
+        }
+        glm::vec3 p = cell->worldPos;
+        float quad[] = {
+            p.x - 0.5f, p.y + yOffset, p.z - 0.5f, 0.0f, normalY, 0.0f, 0.0f, 0.0f,
+            p.x + 0.5f, p.y + yOffset, p.z - 0.5f, 0.0f, normalY, 0.0f, 1.0f, 0.0f,
+            p.x + 0.5f, p.y + yOffset, p.z + 0.5f, 0.0f, normalY, 0.0f, 1.0f, 1.0f,
+            p.x - 0.5f, p.y + yOffset, p.z + 0.5f, 0.0f, normalY, 0.0f, 0.0f, 1.0f,
+        };
+        verts.insert(verts.end(), std::begin(quad), std::end(quad));
+
+        unsigned int index = counter * 4;
+        idx.insert(idx.end(), {index + 0, index + 1, index + 2, index + 0, index + 2, index + 3});
+        counter++;
+    }
+    return {verts, idx};
+}
+// Batched floor quads: one per open cell (plus the exit cell), facing up.
 BatchGeometry createFloorBatch(Grid& grid, const glm::vec3 exitPos) {
-    std::vector<float> floorVerts;
-    std::vector<unsigned int> floorIdx;
-    unsigned int counter = 0;
-    for (auto& cell : grid.getCells()) {
-        if (cell->isWall && (cell->worldPos != exitPos)) {
-            continue;
-        }
-        glm::vec3 p = cell->worldPos;
-        float fVerts[] = {
-            p.x - 0.5f, p.y - 0.51f, p.z - 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-            p.x + 0.5f, p.y - 0.51f, p.z - 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-            p.x + 0.5f, p.y - 0.51f, p.z + 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-            p.x - 0.5f, p.y - 0.51f, p.z + 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-        };
-
-        floorVerts.insert(floorVerts.end(), std::begin(fVerts), std::end(fVerts));
-        unsigned int index = counter * 4;
-        floorIdx.insert(
-            floorIdx.end(), {index + 0, index + 1, index + 2, index + 0, index + 2, index + 3}
-        );
-
-        counter++;
-    }
-    return {floorVerts, floorIdx};
+    return createHorizontalQuadBatch(grid, exitPos, -0.5f, 1.0f);
 }
+// Batched ceiling quads: one per open cell (plus the exit cell), facing down.
 BatchGeometry createCeilingBatch(Grid& grid, const glm::vec3 exitPos) {
-    std::vector<float> ceilingVerts;
-    std::vector<unsigned int> ceilingIdx;
-    unsigned int counter = 0;
-    for (auto& cell : grid.getCells()) {
-        if (cell->isWall && (cell->worldPos != exitPos)) {
-            continue;
-        }
-        glm::vec3 p = cell->worldPos;
-        float cVerts[] = {
-            p.x - 0.5f, p.y + 0.51f, p.z - 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-            p.x + 0.5f, p.y + 0.51f, p.z - 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-            p.x + 0.5f, p.y + 0.51f, p.z + 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
-            p.x - 0.5f, p.y + 0.51f, p.z + 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
-        };
-        ceilingVerts.insert(ceilingVerts.end(), std::begin(cVerts), std::end(cVerts));
-        unsigned int index = counter * 4;
-        ceilingIdx.insert(
-            ceilingIdx.end(), {index + 0, index + 1, index + 2, index + 0, index + 2, index + 3}
-        );
-        counter++;
-    }
-    return {ceilingVerts, ceilingIdx};
+    return createHorizontalQuadBatch(grid, exitPos, 0.5f, -1.0f);
 }
-
+/**
+ * @brief Builds wireframe box geometry visualizing every wall's bounding
+ *        box, for collision debugging.
+ */
 DebugGeometry buildBoundingBoxDebugGeometry(Grid& grid) {
     std::vector<float> unitBoxVerts;
     std::vector<unsigned int> boxLineIndices;
 
     unsigned int counter = 0;
     for (auto& wall : grid.getWalls()) {
+        // Each box contributes 8 vertices (its corners); offset indices
+        // per-wall so they reference this wall's own corners.
         unsigned int base = counter * 8;
 
         std::vector<float> boxVerts = wall->box.boxToVertex();
@@ -113,6 +117,10 @@ DebugGeometry buildBoundingBoxDebugGeometry(Grid& grid) {
     }
     return {unitBoxVerts, boxLineIndices};
 }
+/*
+ * @brief Builds wireframe outline geometry for every floor (non-wall) tile,
+ *        for debugging grid layout/cell boundaries.
+ */
 
 DebugGeometry buildTileDebugGeometry(Grid& grid) {
     DebugGeometry result;

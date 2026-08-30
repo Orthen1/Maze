@@ -11,7 +11,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
-# --- GLFW ---
 FetchContent_Declare(
         glfw
         GIT_REPOSITORY https://github.com/glfw/glfw.git
@@ -21,7 +20,6 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glfw)
-
 
 
 
@@ -65,8 +63,20 @@ if(WIN32)
     target_link_options(Maze PRIVATE
             -static-libgcc
             -static-libstdc++
+            -Wl,-Bstatic,-lwinpthread,-Bdynamic
 
     )
+
+    get_filename_component(MINGW_BIN_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
+    foreach(DLL libwinpthread-1.dll libgcc_s_seh-1.dll libstdc++-6.dll)
+        if(EXISTS "${MINGW_BIN_DIR}/${DLL}")
+            add_custom_command(TARGET Maze POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${MINGW_BIN_DIR}/${DLL}"
+                    $<TARGET_FILE_DIR:Maze>
+            )
+        endif()
+    endforeach()
 
     target_link_libraries(Maze PRIVATE opengl32)
 else()

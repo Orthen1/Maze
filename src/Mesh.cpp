@@ -14,14 +14,15 @@ Mesh::Mesh(
     glBindVertexArray(VAO);
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, size * sizeof(float), vertecies.data(), GL_STATIC_DRAW);
     GLuint stride = 0;
     for (auto& attribute : attributes) {
         stride += attribute.size;
     }
 
+    // Setting VertexAttributes per Attributes
     GLuint offset = 0;
     for (auto& attribute : attributes) {
-        glBufferData(GL_ARRAY_BUFFER, size * sizeof(float), vertecies.data(), GL_STATIC_DRAW);
         glVertexAttribPointer(
             attribute.index, attribute.size, GL_FLOAT, GL_FALSE, stride * sizeof(float),
             (void*)(sizeof(float) * offset)
@@ -40,6 +41,4 @@ Mesh::Mesh(
     }
 
     glBindVertexArray(0);
-
-    glEnableVertexAttribArray(0);
 }

@@ -17,24 +17,33 @@ Grid::Grid(unsigned int rows, unsigned int cols) {
 }
 
 void Grid::Init() {
-    this->rows = 2 * rows + 1;
-    this->cols = 2 * cols + 1;
-    for (int i = 0; i < this->cols; i++) {
-        for (int j = 0; j < this->rows; j++) {
+    // Expand logical maze dimensions into the "doubled" grid, giving each
+    // wall between two cells its own slot.
+    this->cellRows = 2 * rows + 1;
+    this->cellCols = 2 * cols + 1;
+
+    // Allocate one Cell per slot in the expanded grid. All start as walls
+    // (Cell::isWall defaults to true) until generateMaze() carves passages.
+    for (int i = 0; i < this->cellCols; i++) {
+        for (int j = 0; j < this->cellRows; j++) {
             cells.push_back(std::make_unique<Cell>(glm::vec2(i, j), glm::vec3(i, 0.0f, j)));
         }
     }
 }
 
 glm::vec3 Grid::generateMaze() {
+    // Randomized Prim's algorithm: grow the maze outward from a random
+    // starting cell, picking a random frontier cell each iteration and
+    // connecting it back to the visited maze via a random visited neighbour.
     std::mt19937 r_device(std::random_device{}());
-    std::uniform_int_distribution<unsigned int> maxY(0, (rows / 2 - 1));
-    std::uniform_int_distribution<unsigned int> maxX(0, (cols / 2 - 1));
+    std::uniform_int_distribution<unsigned int> maxY(0, (cellRows / 2 - 1));
+    std::uniform_int_distribution<unsigned int> maxX(0, (cellCols / 2 - 1));
+    // Pick a random starting cell on odd grid coordinates
     int posX = 2 * maxX(r_device) + 1;
     int posY = 2 * maxY(r_device) + 1;
     glm::vec2 position(posX, posY);
     std::clog << "POSX: " << posX << " POSY: " << posY << std::endl;
-    glm::vec3 CameraPos(position.x, 0, position.y);
+    glm::vec3 CameraPos(position.x, 0, position.y);  // returned as the camera spawn point
     std::vector<Cell*> frontier, adjacent;
     mark(position.x, position.y, frontier);
 
@@ -46,7 +55,8 @@ glm::vec3 Grid::generateMaze() {
 
         frontier[index] = frontier.back();
         frontier.pop_back();
-
+        // Connect this frontier cell to a random already-visited neighbour,
+        // carving through the wall-slot cell between them.
         adjacent = neighbours(position.x, position.y);
         std::uniform_int_distribution<int> neigbour(0, adjacent.size() - 1);
         index = neigbour(r_device);
@@ -54,12 +64,15 @@ glm::vec3 Grid::generateMaze() {
         int nx = n->position.x;
         int ny = n->position.y;
         carve(position.x, position.y, nx, ny);
+        // Mark this cell visited and add its unvisited neighbours to the frontier.
         mark(position.x, position.y, frontier);
     }
     return CameraPos;
 }
 
 void Grid::mark(int posX, int posY, std::vector<Cell*>& frontier) {
+    // Mark (posX, posY) visited and register its four orthogonal neighbours
+    // as frontier candidates.
     getCell(posX, posY)->visited = true;
     addFrontier(posX - 2, posY, frontier);
     addFrontier(posX + 2, posY, frontier);
@@ -76,17 +89,19 @@ void Grid::addFrontier(int posX, int posY, std::vector<Cell*>& frontier) {
 }
 
 std::vector<Cell*> Grid::neighbours(int posX, int posY) const {
+    // Returns the orthogonal neighbours of (posX, posY) that have already
+    // been visited
     std::vector<Cell*> neighbours;
     if (posX >= 2 && getCell(posX - 2, posY)->visited == true) {
         neighbours.push_back(getCell(posX - 2, posY));
     }
-    if (posX + 2 < cols && getCell(posX + 2, posY)->visited == true) {
+    if (posX + 2 < cellCols && getCell(posX + 2, posY)->visited == true) {
         neighbours.push_back(getCell(posX + 2, posY));
     }
     if (posY >= 2 && getCell(posX, posY - 2)->visited == true) {
         neighbours.push_back(getCell(posX, posY - 2));
     }
-    if (posY + 2 < rows && getCell(posX, posY + 2)->visited == true) {
+    if (posY + 2 < cellRows && getCell(posX, posY + 2)->visited == true) {
         neighbours.push_back(getCell(posX, posY + 2));
     }
 
@@ -94,6 +109,8 @@ std::vector<Cell*> Grid::neighbours(int posX, int posY) const {
 }
 
 void Grid::carve(int x, int y, int nx, int ny) {
+    // Opens a passage between two cells two grid-steps apart by clearing
+    // the wall flag on both endpoints and the wall-slot cell between them.
     int midX = (x + nx) / 2;
     int midY = (y + ny) / 2;
     getCell(x, y)->isWall = false;
@@ -114,8 +131,8 @@ glm::vec3 Grid::generateWalls() {
 }
 
 void Grid::printMaze() const {
-    for (int y = 0; y < rows; ++y) {
-        for (int x = 0; x < cols; ++x) {
+    for (int y = 0; y < cellRows; ++y) {
+        for (int x = 0; x < cellCols; ++x) {
             Cell* cell = getCell(x, y);
             std::cout << (cell->isWall ? "#" : " ");
         }
@@ -133,11 +150,13 @@ std::shared_ptr<Wall> Grid::addWall(const glm::vec3& pos) {
         pos, BoundingBox(pos.x - 0.5f, -0.5f, pos.z - 0.5f, pos.x + 0.5f, 0.5f, pos.z + 0.5f)
     );
     walls.push_back(wall);
-    getCell(pos.x, pos.y)->wall = wall;
+    getCell(pos.x, pos.z)->wall = wall;
     return wall;
 }
 
 void Grid::createExit() {
+    // Collect all non-wall cells sitting on the outer border of the maze —
+    // these are candidates for where the exit opening will be carved.
     std::vector<Cell*> candidates;
 
     for (auto& cell : cells) {
@@ -146,8 +165,8 @@ void Grid::createExit() {
         }
 
         bool onBorder =
-            (cell->worldPos.x == 1 || cell->worldPos.x == cols - 2 || cell->worldPos.z == 1 ||
-             cell->worldPos.z == rows - 2);
+            (cell->worldPos.x == 1 || cell->worldPos.x == cellCols - 2 || cell->worldPos.z == 1 ||
+             cell->worldPos.z == cellRows - 2);
         if (onBorder) {
             candidates.push_back(cell.get());
         }
@@ -158,6 +177,7 @@ void Grid::createExit() {
         return;
     }
 
+    // Picks random adjecent wall to a path that is at an outer ring adn creates exit
     std::mt19937 r_device(std::random_device{}());
     std::uniform_int_distribution<int> pick(0, candidates.size() - 1);
     Cell* chosen = candidates[pick(r_device)];
@@ -166,18 +186,19 @@ void Grid::createExit() {
 
     if (chosen->worldPos.x == 1) {
         wallX = 0;
-    } else if (chosen->worldPos.x == cols - 2) {
-        wallX = cols - 1;
+    } else if (chosen->worldPos.x == cellCols - 2) {
+        wallX = cellCols - 1;
     } else if (chosen->worldPos.z == 1) {
         wallY = 0;
-    } else if (chosen->worldPos.z == rows - 2) {
-        wallY = rows - 1;
+    } else if (chosen->worldPos.z == cellRows - 2) {
+        wallY = cellRows - 1;
     }
 
     removeWall(wallX, wallY);
 }
 
 void Grid::removeWall(int posX, int posY) const {
+    // Find the wall and change it in to exit by using visible flag
     glm::vec3 target = glm::vec3(posX, 0, posY);
     auto wallToRemove =
         std::find_if(walls.begin(), walls.end(), [&](const std::shared_ptr<Wall>& wall) {

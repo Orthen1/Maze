@@ -35,6 +35,8 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
     int success;
     char infoLog[512];
 
+    /** CREATING A VERTEX SHADER  **/
+
     vertex = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex, 1, &vShaderCode, NULL);
     glCompileShader(vertex);
@@ -45,7 +47,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
                   << infoLog << "\n"
                   << std::flush;
     }
-
+    /** CREATING A FRAGMENT SHADER **/
     fragment = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragment, 1, &fShaderCode, NULL);
     glCompileShader(fragment);
@@ -56,7 +58,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
                   << infoLog << "\n"
                   << std::flush;
     }
-
+    /** CREATING A PROGRAM LINKING FRAGMENT SHADER AND VERTEX SHADER **/
     ID = glCreateProgram();
     glAttachShader(ID, vertex);
     glAttachShader(ID, fragment);

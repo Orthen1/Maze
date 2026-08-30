@@ -27,13 +27,11 @@
 #include "Batch.h"
 // clang-format on
 /** DEFINES **/
-#define SCR_HEIGHT    600
-#define SCR_WIDTH     600
+#define SCR_HEIGHT    480
+#define SCR_WIDTH     640
 #define MAX_PARTICLES 12000
 #define TEST          0
 #define FPS           1
-#define BOUNDING_BOX  0
-#define GRID          0
 
 /**  Prototypes **/
 
@@ -51,8 +49,8 @@ enum ERR_CODE {
     SUCCESS = 0,
 };
 /**FLAGS**/
-bool debugBox;
-bool debugGrid;
+bool debugBox = false;   // Runtime toggle for bounding-box debug rendering
+bool debugGrid = false;  // Runtime toggle for grid debug rendering
 
 /** GLOBAL VARIABLES **/
 

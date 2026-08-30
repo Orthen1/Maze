@@ -12,12 +12,22 @@
 #include <sstream>
 #include <string>
 
+/**
+ *  @brief Wraps an OpenGL shader program.
+ *
+ * Handles compiling and linking a vertex/fragment shader pair from file,
+ * and provides helpers to activate the program and upload uniform values.
+ */
 class Shader {
    public:
     unsigned int ID;
     Shader(const char* vertexPath, const char* fragmentPath);
+
     virtual ~Shader() = default;
+    // Actovates Shader for later calls;
     void use();
+
+    // Sets uniforms in shaders
     void setBool(const std::string& name, bool value) const;
     void setInt(const std::string& name, int value) const;
     void setFloat(const std::string& name, float value) const;

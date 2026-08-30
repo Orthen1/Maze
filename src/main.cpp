@@ -2,10 +2,9 @@
 #include "main.h"
 
 int main(int argc, char* args[]) {
-    // TODO help function
-    if (argc >= 2) {
-        grid.setCols((atoi(args[0])));
-        grid.setRows((atoi(args[1])));
+    if (argc >= 3) {
+        grid.setCols((atoi(args[1])));
+        grid.setRows((atoi(args[2])));
     }
 
     grid.Init();
@@ -108,7 +107,7 @@ int main(int argc, char* args[]) {
     // GLFW set Functions //
     glfwSetCursorPosCallback(window, mouseCallback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glViewport(0, 0, 640, 480);
+    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
 
 
@@ -123,8 +122,6 @@ int main(int argc, char* args[]) {
 
 
 
-    glEnable(GL_PROGRAM_POINT_SIZE);
-    stbi_set_flip_vertically_on_load(true);
 
 
     //** Create Grid **//
@@ -136,10 +133,7 @@ int main(int argc, char* args[]) {
     }
     //** Setting Particles **//
     ParticlesPool particles(MAX_PARTICLES);
-
-
-
-
+    //** Batching Geomtery **/
     BatchGeometry mazeWallsBatch = createWallBatch(grid,cubeVertices,indeces);
     BatchGeometry floorBatch =createFloorBatch(grid,exitPos) ;
     BatchGeometry ceilingBatch = createCeilingBatch(grid,exitPos);
@@ -147,7 +141,8 @@ int main(int argc, char* args[]) {
     DebugGeometry boundsGemetry = buildBoundingBoxDebugGeometry(grid);
     Mesh bondingBoxMesh(boundsGemetry.vertcies, std::size(boundsGemetry.vertcies), {{0, 3}}, boundsGemetry.indeces, std::size(boundsGemetry.indeces));
 
-
+    // Build per-cell debug geometry: solid quads for wall footprints,
+    // wireframe outlines for open tiles — used when debugGrid is toggled on.
     unsigned int counter = 0;
     std::vector<float> gridVerts;
     std::vector<unsigned int> tileIndices;
@@ -188,16 +183,11 @@ int main(int argc, char* args[]) {
         counter++;
     }
 
-    //**Binding Box Mesh**//
 
-
+    //** CREATING MESHES **//
     Mesh gridMesh(gridVerts, std::size(gridVerts), {{0, 3}}, tileIndices, std::size(tileIndices));
     Mesh wallMesh(gridVerts, std::size(gridVerts), {{0, 3}}, wallIndices, std::size(wallIndices));
     Bbox.use();
-
-
-    // ** Meshes ** //
-
     Mesh cubeMesh(mazeWallsBatch.vertcies, std::size(mazeWallsBatch.vertcies), {{0, 3}, {1, 3}, {2, 2}}, mazeWallsBatch.indeces, std::size(mazeWallsBatch.indeces));
     Mesh lightCube(cubeVertices,std::size(cubeVertices),{{0,3}, {1,3}, {2, 2}},indeces,std::size(indeces));
     Mesh floorMesh(floorBatch.vertcies, std::size(floorBatch.vertcies),{{0,3},{1,3},{2,2}},floorBatch.indeces,std::size(floorBatch.indeces));
@@ -215,7 +205,7 @@ int main(int argc, char* args[]) {
 
     unsigned int wallTexture = loadImage("../textures/wall.jpg");
     unsigned int wallSpecularTexture = loadImage("../textures/stone_specular.png");
-//** MATERIAL, LIGHT, DEFINITION **//
+    //** MATERIAL, LIGHT, DEFINITION **//
 
     mazeShader.use();
     mazeShader.setInt("material.diffusionMap", 0);
@@ -305,6 +295,7 @@ int main(int argc, char* args[]) {
         glBindVertexArray(ceilingMesh.getVAO());
         glDrawElements(GL_TRIANGLES, ceilingBatch.indeces.size(), GL_UNSIGNED_INT, 0);
 
+        // Floating light-source markers, rendered as small unlit cubes.
         lightShader.use();
         lightShader.setMat4("projection",projection);
         lightShader.setMat4("view",view);
@@ -330,7 +321,8 @@ int main(int argc, char* args[]) {
             particles.Update(deltaTime);
             particles.Render();
         }
-
+        // Debug overlays: wall bounding boxes / grid wireframe, drawn on
+        // top with depth testing off so they're always visible.
         if (debugBox ) {
             glDisable(GL_DEPTH_TEST);
             glLineWidth(2.0f);
@@ -495,10 +487,4 @@ bool wallCollision(Grid& grid) {
 
     return false;
 }
-
-void renderBoundBox() {
-
-
-
-};
 

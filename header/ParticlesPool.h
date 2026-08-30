@@ -10,11 +10,21 @@
 
 #include "Particles.h"
 
+/**
+ * @brief A fixed-size, pre-allocated pool of particles.
+ *
+ *Particle object pool so we can save some time in render if we wanna use them at multiple times.
+ *Owns the GL VAO/VBO used to render all particles in one draw call.
+ */
 class ParticlesPool {
    public:
     ParticlesPool(int max);
+    /// Spawns a single new particle at `position` with `velocity`, reusing
+    /// a dead slot if the pool is full.
     void Spawn(glm::vec3 position, glm::vec3 velocity);
     void Update(float deltaTime);
+
+    /// Spawns a steady stream of particles
     void Pour(glm::vec3 pos, int particlesPerFrame, float deltaTime);
     void Render();
 
