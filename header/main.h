@@ -44,6 +44,7 @@ bool wallCollision(Grid& grid);
 
 /**ERROR CODE**/
 enum ERR_CODE {
+    TO_MANY_PARAMETERS = -3,
     GRID_FAILED = -2,
     GLFW_FAIL = -1,
     SUCCESS = 0,
@@ -62,7 +63,7 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-Grid grid(3, 3);
+Grid grid(5, 5);
 
 bool reachedExit = false;
 #endif  // MAZE_MAIN_H

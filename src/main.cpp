@@ -2,9 +2,12 @@
 #include "main.h"
 
 int main(int argc, char* args[]) {
-    if (argc >= 3) {
+    if (argc == 3) {
         grid.setCols((atoi(args[1])));
         grid.setRows((atoi(args[2])));
+    }else if (argc >= 3 || argc == 2) {
+        std::cout << "Unexprected number of parameters"<<std::endl;
+        return TO_MANY_PARAMETERS;
     }
 
     grid.Init();
