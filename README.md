@@ -62,19 +62,19 @@ For example, the default maze size is `5 x 5` cells, which expands to a `9 x 9` 
 
 ## Controls
 | Key / Input | Action                    |
-| ----------- | ------------------------- |
+| ----------- |---------------------------|
 | `W`         | Move forward              |
 | `S`         | Move backward             |
 | `A`         | Move left                 |
 | `D`         | Move right                |
 | `Mouse`     | Look around               |
-| `F`         | Toggle flying mode        |
+| `F`         | Toggle noclip mode        |
 | `B`         | Toggle bounding boxes     |
 | `G`         | Toggle grid visualization |
 | `ESC`       | Exit                      |
 
-### Flying Mode
-Press `F` to switch between normal movement and flying mode.
+### Noclip Mode
+Press `F` to switch between normal movement and noclip mode.
 
 ### Debug Modes
 * `B` toggles wall bounding boxes.
