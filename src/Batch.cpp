@@ -8,9 +8,9 @@
  *        instancing `cubeVertices`/`indeces` (one cube) at each wall's position.
  */
 BatchGeometry createWallBatch(
-    Grid& grid, const std::vector<float>& cubeVertices, const std::vector<unsigned int>& indeces
+    Grid& grid, const std::vector<Vertex>& cubeVertices, const std::vector<unsigned int>& indeces
 ) {
-    std::vector<float> mazeWallVerteces;
+    std::vector<Vertex> vertices;
     std::vector<unsigned int> mazeWallIndeces;
 
     unsigned int wallCounter = 0;
@@ -19,24 +19,19 @@ BatchGeometry createWallBatch(
         if (!wall->visible) {
             continue;
         }
-        unsigned int wallBase = wallCounter * 24;
-        for (int i = 0; i < cubeVertices.size(); i += 8) {
-            mazeWallVerteces.push_back(cubeVertices[i + 0] + wall->position.x);
-            mazeWallVerteces.push_back(cubeVertices[i + 1] + wall->position.y);
-            mazeWallVerteces.push_back(cubeVertices[i + 2] + wall->position.z);
-            mazeWallVerteces.push_back(cubeVertices[i + 3]);
-            mazeWallVerteces.push_back(cubeVertices[i + 4]);
-            mazeWallVerteces.push_back(cubeVertices[i + 5]);
-            mazeWallVerteces.push_back(cubeVertices[i + 6]);
-            mazeWallVerteces.push_back(cubeVertices[i + 7]);
+        for (auto vertex : cubeVertices) {
+            vertex.Position += wall->position;
+            vertices.push_back(vertex);
         }
+        unsigned int wallBase = wallCounter * 24;
+
         for (auto& index : indeces) {
             mazeWallIndeces.push_back(wallBase + index);
         }
         wallCounter++;
     }
 
-    return {mazeWallVerteces, mazeWallIndeces};
+    return {vertices, mazeWallIndeces};
 }
 /**
  * @brief Builds a batched mesh of horizontal quads (one per open/exit cell),
@@ -53,7 +48,7 @@ BatchGeometry createWallBatch(
 BatchGeometry createHorizontalQuadBatch(
     Grid& grid, const glm::vec3 exitPos, float yOffset, float normalY
 ) {
-    std::vector<float> verts;
+    std::vector<Vertex> verts;
     std::vector<unsigned int> idx;
     unsigned int counter = 0;
 
@@ -62,13 +57,13 @@ BatchGeometry createHorizontalQuadBatch(
             continue;
         }
         glm::vec3 p = cell->worldPos;
-        float quad[] = {
-            p.x - 0.5f, p.y + yOffset, p.z - 0.5f, 0.0f, normalY, 0.0f, 0.0f, 0.0f,
-            p.x + 0.5f, p.y + yOffset, p.z - 0.5f, 0.0f, normalY, 0.0f, 1.0f, 0.0f,
-            p.x + 0.5f, p.y + yOffset, p.z + 0.5f, 0.0f, normalY, 0.0f, 1.0f, 1.0f,
-            p.x - 0.5f, p.y + yOffset, p.z + 0.5f, 0.0f, normalY, 0.0f, 0.0f, 1.0f,
-        };
-        verts.insert(verts.end(), std::begin(quad), std::end(quad));
+        unsigned int base = static_cast<unsigned int>(verts.size());
+        verts.insert(verts.end(), {
+           Vertex({p.x - 0.5f, p.y + yOffset, p.z - 0.5f}, {0.0f, normalY, 0.0f}, {0.0f, 0.0f}),
+           Vertex({p.x + 0.5f, p.y + yOffset, p.z - 0.5f}, {0.0f, normalY, 0.0f}, {1.0f, 0.0f}),
+           Vertex({p.x + 0.5f, p.y + yOffset, p.z + 0.5f}, {0.0f, normalY, 0.0f}, {1.0f, 1.0f}),
+           Vertex({p.x - 0.5f, p.y + yOffset, p.z + 0.5f},{ 0.0f, normalY, 0.0f},{ 0.0f, 1.0f})
+        });
 
         unsigned int index = counter * 4;
         idx.insert(idx.end(), {index + 0, index + 1, index + 2, index + 0, index + 2, index + 3});
@@ -89,17 +84,15 @@ BatchGeometry createCeilingBatch(Grid& grid, const glm::vec3 exitPos) {
  *        box, for collision debugging.
  */
 DebugGeometry buildBoundingBoxDebugGeometry(Grid& grid) {
-    std::vector<float> unitBoxVerts;
     std::vector<unsigned int> boxLineIndices;
-
+    std::vector<Vertex> boxLineVerteces;
     unsigned int counter = 0;
     for (auto& wall : grid.getWalls()) {
         // Each box contributes 8 vertices (its corners); offset indices
         // per-wall so they reference this wall's own corners.
         unsigned int base = counter * 8;
-
-        std::vector<float> boxVerts = wall->box.boxToVertex();
-        unitBoxVerts.insert(unitBoxVerts.end(), boxVerts.begin(), boxVerts.end());
+        std::vector<Vertex> wallBox = wall->box.boxToVertex();
+        boxLineVerteces.insert(boxLineVerteces.end(),wallBox.begin(),wallBox.end());
         boxLineIndices.insert(
             boxLineIndices.end(),
             {
@@ -115,7 +108,7 @@ DebugGeometry buildBoundingBoxDebugGeometry(Grid& grid) {
 
         counter++;
     }
-    return {unitBoxVerts, boxLineIndices};
+    return {boxLineVerteces, boxLineIndices};
 }
 /*
  * @brief Builds wireframe outline geometry for every floor (non-wall) tile,
@@ -129,14 +122,13 @@ DebugGeometry buildTileDebugGeometry(Grid& grid) {
         if (cell->isWall) {
             continue;  // only floor tiles
         }
-
-        std::vector<float> tileVerts = {
-            cell->worldPos.x - 0.5f, cell->worldPos.y - 0.5f, cell->worldPos.z - 0.5f,
-            cell->worldPos.x + 0.5f, cell->worldPos.y - 0.5f, cell->worldPos.z - 0.5f,
-            cell->worldPos.x + 0.5f, cell->worldPos.y - 0.5f, cell->worldPos.z + 0.5f,
-            cell->worldPos.x - 0.5f, cell->worldPos.y - 0.5f, cell->worldPos.z + 0.5f,
-        };
-        result.vertcies.insert(result.vertcies.end(), tileVerts.begin(), tileVerts.end());
+        const glm::vec3 p = cell->worldPos;
+        result.vertcies.insert(result.vertcies.end(),  {
+            Vertex({p.x - 0.5f, p.y - 0.5f, p.z - 0.5f}),
+            Vertex({p.x + 0.5f, p.y - 0.5f, p.z - 0.5f}),
+            Vertex({p.x + 0.5f, p.y - 0.5f, p.z + 0.5f}),
+            Vertex({p.x - 0.5f, p.y - 0.5f, p.z + 0.5f}),
+        });
 
         unsigned int base = counter * 4;
         result.indeces.insert(

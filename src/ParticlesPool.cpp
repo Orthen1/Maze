@@ -49,6 +49,19 @@ void ParticlesPool::Spawn(glm::vec3 position, glm::vec3 velocity) {
     currentAlive++;
 }
 
+// TODO want it to be inforce not an out force
+void ParticlesPool::Elipse(glm::vec3 pos, float deltaTime) {
+    static float accumulativeTime = 0.0f;
+    accumulativeTime += deltaTime;
+    float angle = accumulativeTime * 10.0f;
+
+    float xpos = pos.x + 0.05f * cos(angle);
+    float ypos = pos.y + 0.03f * sin(angle);
+
+    glm::vec3 velocity = glm::normalize(glm::vec3(cos(angle), sin(angle), 0.0f)) * 2.0f;
+    Spawn({xpos, ypos, pos.z}, velocity);
+}
+
 void ParticlesPool::Update(float deltaTime) {
     int i = 0;
     while (i < currentAlive) {

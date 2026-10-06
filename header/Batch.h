@@ -8,14 +8,16 @@
 #include <vector>
 
 #include "Grid.h"
+#include "Mesh.h"
+
 /// Combined vertex/index buffers for a batch of geometry
 struct BatchGeometry {
-    std::vector<float> vertcies;
+    std::vector<Vertex> vertcies;
     std::vector<unsigned int> indeces;
 };
 
 BatchGeometry createWallBatch(
-    Grid& grid, const std::vector<float>& cubeVertecies, const std::vector<unsigned int>& indeces
+    Grid& grid, const std::vector<Vertex>& cubeVertecies, const std::vector<unsigned int>& indeces
 );
 BatchGeometry createFloorBatch(Grid& grid, const glm::vec3 exitPos);
 BatchGeometry createCeilingBatch(Grid& grid, const glm::vec3 exitPos);
@@ -24,7 +26,7 @@ BatchGeometry createHorizontalQuadBatch(
 );
 /// Combined vertex/index buffers for a batch of geometry for debugging purpusses
 struct DebugGeometry {
-    std::vector<float> vertcies;
+    std::vector<Vertex> vertcies;
     std::vector<unsigned int> indeces;
 };
 

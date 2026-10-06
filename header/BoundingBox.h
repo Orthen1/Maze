@@ -6,6 +6,9 @@
 #define MAZE_BOUNDINGBOX_H
 #include <vector>
 
+#include "Mesh.h"
+#include "glm/vec3.hpp"
+
 /// An axis-aligned bounding box (AABB), used for collision detection.
 struct BoundingBox {
     float minX, minY, minZ, maxX, maxY, maxZ;
@@ -23,10 +26,17 @@ struct BoundingBox {
                maxY >= other.minY && minZ <= other.maxZ && maxZ >= other.minZ;
     }
     /// Converts bounding box to Vertecies for debug function
-    std::vector<float> boxToVertex() {
-        return {minX, minY, minZ, maxX, minY, minZ, maxX, minY, maxZ, minX, minY, maxZ,
-
-                minX, maxY, minZ, maxX, maxY, minZ, maxX, maxY, maxZ, minX, maxY, maxZ};
+   std::vector<Vertex> boxToVertex() {
+        return {
+            Vertex({minX, minY, minZ}),
+            Vertex({maxX, minY, minZ}),
+            Vertex({maxX, minY, maxZ}),
+            Vertex({minX, minY, maxZ}),
+            Vertex({minX, maxY, minZ}),
+            Vertex({maxX, maxY, minZ}),
+            Vertex({maxX, maxY, maxZ}),
+            Vertex({minX, maxY, maxZ})
+        };
     };
 };
 #endif  // MAZE_BOUNDINGBOX_H

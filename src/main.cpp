@@ -1,12 +1,12 @@
 
 #include "main.h"
 
-int main(int argc, char* args[]) {
-    if (argc == 3) {
-        grid.setCols((atoi(args[1])));
+    int main(int argc, char* args[]) {
+        if (argc == 3) {
+            grid.setCols((atoi(args[1])));
         grid.setRows((atoi(args[2])));
-    }else if (argc >= 3 || argc == 2) {
-        std::cout << "Unexprected number of parameters"<<std::endl;
+    } else if (argc >= 3 || argc == 2) {
+        std::cout << "Unexprected number of parameters" << std::endl;
         return TO_MANY_PARAMETERS;
     }
 
@@ -25,37 +25,37 @@ int main(int argc, char* args[]) {
     std::string boxFs = "../Shaders/BoundingBox.fs";
 
     // clang-format off
-    std::vector<float> cubeVertices = {
+    std::vector<Vertex> cubeVertices = {
         // BACK
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+        Vertex({-0.5f, -0.5f, -0.5f}, { 0.0f,  0.0f, -1.0f}, {0.0f, 0.0f}),
+        Vertex({ 0.5f, -0.5f, -0.5f}, { 0.0f,  0.0f, -1.0f}, {1.0f, 0.0f}),
+        Vertex({-0.5f,  0.5f, -0.5f}, { 0.0f,  0.0f, -1.0f}, {0.0f, 1.0f}),
+        Vertex({ 0.5f,  0.5f, -0.5f}, { 0.0f,  0.0f, -1.0f}, {1.0f, 1.0f}),
         // FRONT
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,
+        Vertex({-0.5f, -0.5f,  0.5f}, { 0.0f,  0.0f,  1.0f}, {0.0f, 0.0f}),
+        Vertex({ 0.5f, -0.5f,  0.5f}, { 0.0f,  0.0f,  1.0f}, {1.0f, 0.0f}),
+        Vertex({-0.5f,  0.5f,  0.5f}, { 0.0f,  0.0f,  1.0f}, {0.0f, 1.0f}),
+        Vertex({ 0.5f,  0.5f,  0.5f}, { 0.0f,  0.0f,  1.0f}, {1.0f, 1.0f}),
         // LEFT
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+        Vertex({-0.5f, -0.5f, -0.5f}, {-1.0f,  0.0f,  0.0f}, {0.0f, 0.0f}),
+        Vertex({-0.5f,  0.5f, -0.5f}, {-1.0f,  0.0f,  0.0f}, {0.0f, 1.0f}),
+        Vertex({-0.5f, -0.5f,  0.5f}, {-1.0f,  0.0f,  0.0f}, {1.0f, 0.0f}),
+        Vertex({-0.5f,  0.5f,  0.5f}, {-1.0f,  0.0f,  0.0f}, {1.0f, 1.0f}),
         // RIGHT
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+        Vertex({ 0.5f, -0.5f, -0.5f}, { 1.0f,  0.0f,  0.0f}, {0.0f, 0.0f}),
+        Vertex({ 0.5f,  0.5f, -0.5f}, { 1.0f,  0.0f,  0.0f}, {0.0f, 1.0f}),
+        Vertex({ 0.5f, -0.5f,  0.5f}, { 1.0f,  0.0f,  0.0f}, {1.0f, 0.0f}),
+        Vertex({ 0.5f,  0.5f,  0.5f}, { 1.0f,  0.0f,  0.0f}, {1.0f, 1.0f}),
         // BOTTOM
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+        Vertex({-0.5f, -0.5f, -0.5f}, { 0.0f, -1.0f,  0.0f}, {0.0f, 1.0f}),
+        Vertex({ 0.5f, -0.5f, -0.5f}, { 0.0f, -1.0f,  0.0f}, {1.0f, 1.0f}),
+        Vertex({-0.5f, -0.5f,  0.5f}, { 0.0f, -1.0f,  0.0f}, {0.0f, 0.0f}),
+        Vertex({ 0.5f, -0.5f,  0.5f}, { 0.0f, -1.0f,  0.0f}, {1.0f, 0.0f}),
         // TOP
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
+        Vertex({-0.5f,  0.5f, -0.5f}, { 0.0f,  1.0f,  0.0f}, {0.0f, 0.0f}),
+        Vertex({ 0.5f,  0.5f, -0.5f}, { 0.0f,  1.0f,  0.0f}, {1.0f, 0.0f}),
+        Vertex({-0.5f,  0.5f,  0.5f}, { 0.0f,  1.0f,  0.0f}, {0.0f, 1.0f}),
+        Vertex({ 0.5f,  0.5f,  0.5f}, { 0.0f,  1.0f,  0.0f}, {1.0f, 1.0f}),
     };
 
     //clang-format on
@@ -142,19 +142,22 @@ int main(int argc, char* args[]) {
     BatchGeometry ceilingBatch = createCeilingBatch(grid,exitPos);
 
     DebugGeometry boundsGemetry = buildBoundingBoxDebugGeometry(grid);
-    Mesh bondingBoxMesh(boundsGemetry.vertcies, std::size(boundsGemetry.vertcies), {{0, 3}}, boundsGemetry.indeces, std::size(boundsGemetry.indeces));
+    Mesh bondingBoxMesh(boundsGemetry.vertcies,{},boundsGemetry.indeces);
 
     // Build per-cell debug geometry: solid quads for wall footprints,
     // wireframe outlines for open tiles — used when debugGrid is toggled on.
     unsigned int counter = 0;
-    std::vector<float> gridVerts;
+    std::vector<Vertex> gridVerts;
     std::vector<unsigned int> tileIndices;
     std::vector<unsigned int> wallIndices;
     for (auto& cell : grid.getCells()) {
-        std::vector<float> tileVerts = {
-            cell->worldPos.x - 0.5f, cell->worldPos.y - 0.5f, cell->worldPos.z - 0.5f, cell->worldPos.x + 0.5f, cell->worldPos.y - 0.5f, cell->worldPos.z - 0.5f,
-            cell->worldPos.x + 0.5f, cell->worldPos.y - 0.5f, cell->worldPos.z + 0.5f, cell->worldPos.x - 0.5f, cell->worldPos.y - 0.5f, cell->worldPos.z + 0.5f,
+        std::vector<Vertex> tileVerts = {
+            Vertex({cell->worldPos.x - 0.5f, cell->worldPos.y - 0.5f, cell->worldPos.z - 0.5f}),
+            Vertex({cell->worldPos.x + 0.5f, cell->worldPos.y - 0.5f, cell->worldPos.z - 0.5f}),
+            Vertex({cell->worldPos.x - 0.5f, cell->worldPos.y - 0.5f, cell->worldPos.z + 0.5f}),
+           Vertex({cell->worldPos.x + 0.5f, cell->worldPos.y - 0.5f, cell->worldPos.z + 0.5f})
         };
+
         gridVerts.insert(gridVerts.end(), tileVerts.begin(), tileVerts.end());
         unsigned int base = counter * 4;
 
@@ -162,39 +165,48 @@ int main(int argc, char* args[]) {
             wallIndices.insert(
                 wallIndices.end(), {
                                        base + 0,
+                                       base + 2,
                                        base + 1,
                                        base + 2,
-                                       base + 0,
-                                       base + 2,
                                        base + 3,
+                                       base + 1,
                                    }
             );
         } else {
             tileIndices.insert(
                 tileIndices.end(), {
-                                       base + 0,
-                                       base + 1,
-                                       base + 1,
-                                       base + 2,
-                                       base + 2,
-                                       base + 3,
-                                       base + 3,
-                                       base + 0,
+                    base + 0,
+                  base + 1,
+                  base + 1,
+                  base + 2,
+                  base + 2,
+                  base + 3,
+                  base + 3,
+                  base + 0,
                                    }
             );
         }
         counter++;
     }
 
+        //** TEXTURE DEFINITION  **//
+
+        unsigned int wallTexture = loadImage("../textures/wall.jpg");
+        unsigned int wallSpecularTexture = loadImage("../textures/stone_specular.png");
+        std::vector<Texture> wallTextures = {{wallTexture,"texture_diffuse"}, {wallSpecularTexture, "texture_specular"}} ;
+
+        unsigned int floorTexture = loadImage("../textures/floor.jpg");
+        unsigned int floorSpecular = loadImage("../textures/floor_specular.png");
+        std::vector<Texture> floorTextures = {{floorTexture,"texture_diffuse"}, {floorSpecular,"texture_specular"}};
 
     //** CREATING MESHES **//
-    Mesh gridMesh(gridVerts, std::size(gridVerts), {{0, 3}}, tileIndices, std::size(tileIndices));
-    Mesh wallMesh(gridVerts, std::size(gridVerts), {{0, 3}}, wallIndices, std::size(wallIndices));
+    Mesh gridMesh(gridVerts,{}, tileIndices );
+    Mesh wallMesh(gridVerts,{}, wallIndices);
     Bbox.use();
-    Mesh cubeMesh(mazeWallsBatch.vertcies, std::size(mazeWallsBatch.vertcies), {{0, 3}, {1, 3}, {2, 2}}, mazeWallsBatch.indeces, std::size(mazeWallsBatch.indeces));
-    Mesh lightCube(cubeVertices,std::size(cubeVertices),{{0,3}, {1,3}, {2, 2}},indeces,std::size(indeces));
-    Mesh floorMesh(floorBatch.vertcies, std::size(floorBatch.vertcies),{{0,3},{1,3},{2,2}},floorBatch.indeces,std::size(floorBatch.indeces));
-    Mesh ceilingMesh(ceilingBatch.vertcies, std::size(ceilingBatch.vertcies),{{0,3},{1,3},{2,2}},ceilingBatch.indeces,std::size(ceilingBatch.indeces));
+    Mesh cubeMesh(mazeWallsBatch.vertcies,wallTextures, mazeWallsBatch.indeces);
+    Mesh lightCube(cubeVertices,{},indeces);
+    Mesh floorMesh(floorBatch.vertcies,floorTextures,floorBatch.indeces);
+    Mesh ceilingMesh(ceilingBatch.vertcies, floorTextures,ceilingBatch.indeces);
 #if TEST
     grid.printMaze();
 
@@ -204,21 +216,11 @@ int main(int argc, char* args[]) {
     std::vector<Light> lights = Light::generatePointLight(grid,4.0f);
 
 
-    //** TEXTURE DEFINITION  **//
 
-    unsigned int wallTexture = loadImage("../textures/wall.jpg");
-    unsigned int wallSpecularTexture = loadImage("../textures/stone_specular.png");
     //** MATERIAL, LIGHT, DEFINITION **//
-
+;
     mazeShader.use();
-    mazeShader.setInt("material.diffusionMap", 0);
-    mazeShader.setInt("material.specularMap", 1);
-    mazeShader.setFloat("material.shininess",64.0f);
 
-
-    unsigned int floorTexture = loadImage("../textures/floor.jpg");
-    unsigned int floorSpecular = loadImage("../textures/floor_specular.png");
-    mazeShader.use();
 
     mazeShader.setVec3("dirLight.direction",{-0.05f,-1.0f,-0.05f});
     mazeShader.setVec3("dirLight.ambient",{0.1f,0.1f,0.12f});
@@ -257,13 +259,11 @@ int main(int argc, char* args[]) {
         // Input Process //
         ProcessInput(window);
 
-        glClearColor(background_color.x, background_color.y, background_color.z, background_color.w);
+        //glClearColor(background_color.x, background_color.y, background_color.z, background_color.w);
+        glClearColor(0.2f, 0.2f, 0.25f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, wallTexture);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D,wallSpecularTexture);
+
 
         // Rendering Process //
         mazeShader.use();
@@ -276,28 +276,20 @@ int main(int argc, char* args[]) {
         mazeShader.setMat4("view", view);
 
 
-            glm::mat4 model = glm::mat4(1.0f);
-            mazeShader.setMat4("model", model);
+        glm::mat4 model = glm::mat4(1.0f);
+        mazeShader.setMat4("model", model);
 
         if (!debugBox || !debugGrid) {
-            glBindVertexArray(cubeMesh.getVAO());
-            glDrawElements(GL_TRIANGLES, mazeWallsBatch.indeces.size(), GL_UNSIGNED_INT, 0);
+
+        mazeShader.setFloat("material.shininess",64.0f);
+            cubeMesh.Draw(mazeShader, GL_TRIANGLES);
         }
-        mazeShader.use();
-        mazeShader.setInt("material.diffusionMap", 0);
-        mazeShader.setInt("material.specularMap", 1);
+
         mazeShader.setFloat("material.shininess",32.0f);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, floorTexture);
+        floorMesh.Draw(mazeShader, GL_TRIANGLES);
+        mazeShader.setMat4("model", model);
 
-
-            glBindVertexArray(floorMesh.getVAO());
-            glDrawElements(GL_TRIANGLES, floorBatch.indeces.size(), GL_UNSIGNED_INT, 0);
-            mazeShader.setMat4("model", model);
-
-        glBindVertexArray(ceilingMesh.getVAO());
-        glDrawElements(GL_TRIANGLES, ceilingBatch.indeces.size(), GL_UNSIGNED_INT, 0);
-
+        ceilingMesh.Draw(mazeShader,GL_TRIANGLES);
         // Floating light-source markers, rendered as small unlit cubes.
         lightShader.use();
         lightShader.setMat4("projection",projection);
@@ -307,8 +299,7 @@ int main(int argc, char* args[]) {
             model = glm::translate(model,{light.position.x,light.position.y + 0.3, light.position.z});
             model = glm::scale(model,{0.1f,0.1f,0.1f});
             lightShader.setMat4("model",model);
-            glBindVertexArray(lightCube.getVAO());
-            glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_INT,0);
+            lightCube.Draw(lightShader,GL_TRIANGLES);
 
 
         }
@@ -316,14 +307,14 @@ int main(int argc, char* args[]) {
             particelShader.use();
             particelShader.setMat4("projection",projection);
             particelShader.setMat4("view",view);
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model,glm::vec3(0.0f,0.0f,0.0f));
             particelShader.setMat4("model",glm::mat4(1.0f));
 
             particles.Pour({exitPos.x,exitPos.y +0.5f,exitPos.z},12000,deltaTime);
             particles.Update(deltaTime);
             particles.Render();
         }
+
+
         // Debug overlays: wall bounding boxes / grid wireframe, drawn on
         // top with depth testing off so they're always visible.
         if (debugBox ) {
@@ -335,23 +326,21 @@ int main(int argc, char* args[]) {
             Bbox.setMat4("projection", projection);
             glm::mat4 model = glm::mat4(1.0f);
             Bbox.setMat4("model", model);
-            glBindVertexArray(bondingBoxMesh.getVAO());
-            glDrawElements(GL_LINES, std::size(boundsGemetry.indeces), GL_UNSIGNED_INT, 0);
+            bondingBoxMesh.Draw(Bbox, GL_LINES);
             glEnable(GL_DEPTH_TEST);
 
         }
         if (debugGrid) {
             glDisable(GL_DEPTH_TEST);
             glLineWidth(2.0f);
+            //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             Bbox.use();
             Bbox.setMat4("view", view);
             Bbox.setMat4("projection", projection);
             glm::mat4 model = glm::mat4(1.0f);
             Bbox.setMat4("model", model);
-            glBindVertexArray(gridMesh.getVAO());
-            glDrawElements(GL_LINES, tileIndices.size(), GL_UNSIGNED_INT, 0);
-            glBindVertexArray(wallMesh.getVAO());
-            glDrawElements(GL_TRIANGLES, wallIndices.size(), GL_UNSIGNED_INT, 0);
+            gridMesh.Draw(Bbox,GL_LINES);
+            wallMesh.Draw(Bbox,GL_TRIANGLES);
             glEnable(GL_DEPTH_TEST);
         }
 

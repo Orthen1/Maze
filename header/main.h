@@ -23,7 +23,7 @@
 #include "Mesh.h"
 #include "ParticlesPool.h"
 #include "Shader.h"
-#include "stb_image.h"
+#include "../External/stb_image/stb_image.h"
 #include "Batch.h"
 // clang-format on
 /** DEFINES **/
@@ -31,7 +31,7 @@
 #define SCR_WIDTH     640
 #define MAX_PARTICLES 12000
 #define TEST          0
-#define FPS           1
+#define FPS           0
 
 /**  Prototypes **/
 
@@ -66,4 +66,5 @@ float lastFrame = 0.0f;
 Grid grid(5, 5);
 
 bool reachedExit = false;
+bool elipse = false;
 #endif  // MAZE_MAIN_H

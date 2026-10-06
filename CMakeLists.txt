@@ -16,9 +16,6 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/glfw/glfw.git
         GIT_TAG 3.4
 )
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glfw)
 
 
@@ -30,8 +27,9 @@ include_directories(header src External)
 #find_package(glfw3 REQUIRED)
 #find_package(glm REQUIRED)
 #find_package(OpenGL REQUIRED)
+find_package(assimp REQUIRED)
 
-set(SOURCE_FILES src/main.cpp src/glad.c src/stb_image.cpp
+set(SOURCE_FILES src/main.cpp src/glad.c External/stb_image/stb_image.cpp
         src/Shader.cpp
         header/Shader.h
         src/Camera.cpp
@@ -53,6 +51,15 @@ set(SOURCE_FILES src/main.cpp src/glad.c src/stb_image.cpp
         src/Light.cpp
         header/Batch.h
         src/Batch.cpp
+        src/Player.cpp
+        header/Player.h
+        header/Player.h
+        src/Spell.cpp
+        header/Spell.h
+        header/BoundingShapes.h
+        src/BoundingShapes.cpp
+        src/BoundingShapes.cpp
+        header/enums.h
 )
 
 add_executable(Maze ${SOURCE_FILES})
@@ -84,5 +91,5 @@ else()
 
     target_link_libraries(Maze PRIVATE GL)
 endif()
-target_link_libraries(Maze PRIVATE glfw glm::glm)
+target_link_libraries(Maze PRIVATE glfw glm::glm assimp::assimp)
 

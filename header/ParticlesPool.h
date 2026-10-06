@@ -26,6 +26,7 @@ class ParticlesPool {
 
     /// Spawns a steady stream of particles
     void Pour(glm::vec3 pos, int particlesPerFrame, float deltaTime);
+    void Elipse(glm::vec3 pos, float deltaTime);
     void Render();
 
    private:
