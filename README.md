@@ -1,5 +1,4 @@
 # Maze
-# Task - C/C++ Graphics Developer
 # Procedural Maze Explorer
 
 ### Prims Algorithm
