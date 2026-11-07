@@ -140,17 +140,17 @@ void Grid::printMaze() const {
     }
 }
 
-std::shared_ptr<Wall> Grid::addWall(const glm::vec3& pos) {
+std::unique_ptr<Wall> Grid::addWall(const glm::vec3& pos) {
     for (const auto& wall : walls) {
         if (wall->position == pos) {
             return nullptr;
         }
     }
-    std::shared_ptr<Wall> wall = std::make_shared<Wall>(
+    std::unique_ptr<Wall> wall = std::make_unique<Wall>(
         pos, BoundingBox(pos.x - 0.5f, -0.5f, pos.z - 0.5f, pos.x + 0.5f, 0.5f, pos.z + 0.5f)
     );
-    walls.push_back(wall);
-    getCell(pos.x, pos.z)->wall = wall;
+    walls.push_back(std::move(wall));
+    getCell(pos.x, pos.z)->wall=  std::move(wall);
     return wall;
 }
 
@@ -201,7 +201,7 @@ void Grid::removeWall(int posX, int posY) const {
     // Find the wall and change it in to exit by using visible flag
     glm::vec3 target = glm::vec3(posX, 0, posY);
     auto wallToRemove =
-        std::find_if(walls.begin(), walls.end(), [&](const std::shared_ptr<Wall>& wall) {
+        std::find_if(walls.begin(), walls.end(), [&](const std::unique_ptr<Wall>& wall) {
             return wall->position == target;
         });
 

@@ -24,7 +24,7 @@ struct Cell {
     bool visited = false;
     bool frontier = false;
     bool isWall = true;
-    std::shared_ptr<Wall> wall;
+    std::unique_ptr<Wall> wall;
 };
 /**
  * @brief Procedurally generates and stores a maze as a grid of cells and walls.
@@ -50,7 +50,7 @@ class Grid {
     void setRows(int rowsIn) { this->rows = rowsIn; };
     void setCols(int colsIn) { this->cols = colsIn; };
     std::vector<std::unique_ptr<Cell>>& getCells() { return cells; };
-    std::vector<std::shared_ptr<Wall>>& getWalls() { return walls; };
+    std::vector<std::unique_ptr<Wall>>& getWalls() { return walls; };
     Cell* getCell(int posX, int posY) const;
     Cell* getCell(glm::vec2 position) const;
     int getCols() const { return cols; };
@@ -66,7 +66,7 @@ class Grid {
     unsigned int cellCols;  ///< 2*cols - 1, same expansion as cellRows
 
     std::vector<std::unique_ptr<Cell>> cells;  /// Hold all the cells in the maze
-    std::vector<std::shared_ptr<Wall>> walls;  /// Holds all the walls in the maze for faster lookup
+    std::vector<std::unique_ptr<Wall>> walls;  /// Holds all the walls in the maze for faster lookup
 
     /// Runs the Prims Algorithm
     /// and returns the starting positon of player
@@ -79,7 +79,7 @@ class Grid {
 
     std::vector<Cell*> neighbours(int posX, int posY) const;
 
-    std::shared_ptr<Wall> addWall(const glm::vec3& pos);
+    std::unique_ptr<Wall> addWall(const glm::vec3& pos);
     /// Removes the wall between adjacent cells (x, y) and (nx, ny), joining them.
     void carve(int x, int y, int nx, int ny);
 
